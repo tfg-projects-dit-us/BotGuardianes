@@ -4,7 +4,10 @@ import ics
 import datetime
 import pytz
 import calendar
-
+import arrow
+import locale
+import yaml
+locale.setlocale(locale.LC_ALL,'es_ES')
 
 #Iniciamos el logging en la ventana de consola para mostrar información
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
@@ -18,7 +21,7 @@ with open("token.txt") as f:
 bot=telegram.Bot(token=tokenbot)
 
 #Cargamos el calendario
-ficherocalendario= open('evento con asistentes.txt','r')
+ficherocalendario= open('calendario.ics','r')
 calendario=ics.icalendar.Calendar(ficherocalendario.read())
 ficherocalendario.close()
 
@@ -54,9 +57,18 @@ def start(update, context):
                      reply_markup=kb_markup)
 #Esta funcion representa las guardias disponibles
 def guardiasdisponibles(update, context):
+    cadena=""
+    #reply_markup=telegram.InlineKeyboardMarkup([])
     for e in calendario.events:
-        print(e.begin)
-        print(e.end)
+        if timestampmesfinal() >e.begin.datetime > timestampmesinicio():
+            if list(e.attendees)[0].common_name == "Luis NG":
+                cadena=cadena + "\n" +e.name + "Asistentes: " + list(e.attendees)[0].common_name + " : " + str(e.begin.format('DD-MM-YY HH:mm')) 
+                #reply_markup
+                print(update.effective_chat.id)
+                bot.send_message(chat_id=update.message.chat_id,
+                         text=cadena
+                         )
+
     
     print('')
 

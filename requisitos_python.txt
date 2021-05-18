@@ -1,0 +1,5 @@
+python-telegram-bot
+pyyaml
+pytz
+arrow
+ics
