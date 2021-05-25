@@ -53,24 +53,60 @@ def start(update, context):
           [telegram.KeyboardButton('Boton 3'),telegram.KeyboardButton('Boton 4')]]
     kb_markup = telegram.ReplyKeyboardMarkup(kb,resize_keyboard=True)
     bot.send_message(chat_id=update.message.chat_id,
-                     text="your message",
+                     text="Seleccione una opción",
                      reply_markup=kb_markup)
+
+
+def registro(update, context):
+    bot.send_message(chat_id=update.message.chat_id,
+                     text="Introduce tu correo electrónico para registrarte en la plataforma",
+                     )
+    #Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso, enviaríamos el id
+    
+    bot.send_message(chat_id=update.message.chat_id,
+                     text="Ha sido registrado en la plataforma, ") #Imprimimos su nombre
+
+    bot.send_message(chat_id=update.message.chat_id,
+                     text="Su correo no ha sido encontrado en la plataforma. Por favor, consulte al administrador de su sistema para comprobar que sus datos están adecuadamente agregados")
+
+
 #Esta funcion representa las guardias disponibles
 def guardiasdisponibles(update, context):
+    reply_markup=[]
+    lista_botones=[[]]
     cadena=""
-    #reply_markup=telegram.InlineKeyboardMarkup([])
     for e in calendario.events:
         if timestampmesfinal() >e.begin.datetime > timestampmesinicio():
-            if list(e.attendees)[0].common_name == "Luis NG":
-                cadena=cadena + "\n" +e.name + "Asistentes: " + list(e.attendees)[0].common_name + " : " + str(e.begin.format('DD-MM-YY HH:mm')) 
+            if  list(e.attendees) == []:
+                lista_botones=lista_botones + [[telegram.InlineKeyboardButton(text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm') ),callback_data=patata) ]]
+
+                cadena=cadena + "\n" +e.name +  " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm')) 
                 #reply_markup
-                print(update.effective_chat.id)
-                bot.send_message(chat_id=update.message.chat_id,
-                         text=cadena
+                #print(update.effective_chat.id)
+
+    reply_markup=telegram.InlineKeyboardMarkup(lista_botones)
+    bot.send_message(chat_id=update.message.chat_id,
+                         text=cadena,
+                         reply_markup=reply_markup
                          )
 
+def guardiaspropias(update, context):
+    #reply_markup=telegram.InlineKeyboardMarkup([])
+    cadena=""
+    for e in calendario.events:
+        if timestampmesfinal() >e.begin.datetime > timestampmesinicio():
+            #Aqui pediriamos el nombre del usuario a través de REST, usando el id de Telegram como dato
+            nombre_usuario="NOMBRE"
+            if list(e.attendees)[0].common_name == nombre_usuario:
+                #str(e.begin.format('DD-MM-YY HH:mm')) 
+                #reply_markup
+                cadena=cadena + "\n" + e.name + "Asignada a " + list(e.attendees)[0].common_name + " en fecha: " +str(e.begin.format('DD-MM-YY HH:mm'))
+
+    bot.send_message(chat_id=update.message.chat_id,
+                         text=cadena
+                         )
     
-    print('')
+
 
 print(calendario.events)
 print(datetime.datetime.now())
@@ -87,7 +123,7 @@ dispatcher.add_handler(start_handler)
 #Aplico la funcion echo a los mensajes escritos que se reciben
 echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
 dispatcher.add_handler(echo_handler)
-updater.start_polling()
+
 
 #Anadimos la función de mayusculas al comando /caps del bot
 caps_handler = CommandHandler('caps', caps)
@@ -97,3 +133,6 @@ dispatcher.add_handler(caps_handler)
 #Añadimos función de guardias disponibles
 gdisp_handler=CommandHandler('guardiasdisponibles',guardiasdisponibles)
 dispatcher.add_handler(gdisp_handler)
+
+
+updater.start_polling()
