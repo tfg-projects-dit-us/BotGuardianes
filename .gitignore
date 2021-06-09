@@ -14,12 +14,5 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 /.vscode
 /.vs
-/token.txt
-/calendarioprueba.ics
-/prueba.ics
-/Eventoprueba.ics
-/evento con asistentes.txt
 /calendario.ics
-/token.json
-/quickstart.py
-/credentials.json
+/config

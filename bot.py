@@ -7,25 +7,48 @@ import calendar
 import arrow
 import locale
 import yaml
-locale.setlocale(locale.LC_ALL,'es_ES')
-
+import os.path
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 #Iniciamos el logging en la ventana de consola para mostrar información
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.DEBUG)
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+
+
+locale.setlocale(locale.LC_ALL,'es_ES')
+#Cargamos fichero de configuracion
+
+with open('config.yaml','r') as configuracion:
+    config=yaml.safe_load(configuracion)
+
+logging.debug('Cargado fichero de configuracion config.yaml')
+
 
 #Este es el token del bot que se ha generado con BotFather.
-tokenbot= None
-with open("token.txt") as f:
-    tokenbot = f.read().strip()
+tokenbot= config['telegram']['token_bot']
 bot=telegram.Bot(token=tokenbot)
+logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
 
-#Cargamos el calendario
-ficherocalendario= open('calendario.ics','r')
-calendario=ics.icalendar.Calendar(ficherocalendario.read())
-ficherocalendario.close()
+#Cargamos la cuenta de servicio de Google
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+#Cargamos el calendario de Google
+creds = service_account.Credentials.from_service_account_file('service_secret.json', scopes=SCOPES)
 
+service = build('calendar', 'v3', credentials=creds)
+
+logging.debug('Cargado token de Google')
+cal_principal = service.calendars().get(calendarId=config['calendarios']['id_principal']).execute()
+logging.debug('Calendario principal cargado')
+
+cal_propuestas = service.calendars().get(calendarId=config['calendarios']['id_propuestas']).execute()
+logging.debug('Calendario de propuestas cargado')
 #Función para calcular el timestamp del primer dia del mes
+
 def timestampmesinicio():
     fecha=datetime.date.today()
     tstamp=datetime.datetime(fecha.year,fecha.month,1,0,0,0,tzinfo=pytz.timezone('Europe/Madrid'))
