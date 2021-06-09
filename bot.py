@@ -15,15 +15,15 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 #Iniciamos el logging en la ventana de consola para mostrar información
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 locale.setlocale(locale.LC_ALL,'es_ES')
 #Cargamos fichero de configuracion
 
-with open('config.yaml','r') as configuracion:
+with open('config/config.yaml','r') as configuracion:
     config=yaml.safe_load(configuracion)
 
 logging.debug('Cargado fichero de configuracion config.yaml')
@@ -36,13 +36,30 @@ logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
 
 #Cargamos la cuenta de servicio de Google
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-#Cargamos el calendario de Google
-creds = service_account.Credentials.from_service_account_file('service_secret.json', scopes=SCOPES)
 
+creds = None
+# The file token.json stores the user's access and refresh tokens, and is
+# created automatically when the authorization flow completes for the first
+# time.
+if os.path.exists('config/token.json'):
+    creds = Credentials.from_authorized_user_file('config/token.json', SCOPES)
+# If there are no (valid) credentials available, let the user log in.
+if not creds or not creds.valid:
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            'config/credentials.json', SCOPES)
+        creds = flow.run_local_server(port=0)
+    # Save the credentials for the next run
+    with open('config/token.json', 'w') as token:
+        token.write(creds.to_json())
+
+#Cargamos el calendario de Google
 service = build('calendar', 'v3', credentials=creds)
 
 logging.debug('Cargado token de Google')
-cal_principal = service.calendars().get(calendarId=config['calendarios']['id_principal']).execute()
+cal_principal = service.calendars().get(calendarId='primary').execute()
 logging.debug('Calendario principal cargado')
 
 cal_propuestas = service.calendars().get(calendarId=config['calendarios']['id_propuestas']).execute()
@@ -98,6 +115,7 @@ def guardiasdisponibles(update, context):
     reply_markup=[]
     lista_botones=[[]]
     cadena=""
+    service.events()
     for e in calendario.events:
         if timestampmesfinal() >e.begin.datetime > timestampmesinicio():
             if  list(e.attendees) == []:
@@ -131,7 +149,7 @@ def guardiaspropias(update, context):
     
 
 
-print(calendario.events)
+#print(cal_principal.events)
 print(datetime.datetime.now())
 print(timestampmesinicio())
 print(timestampmesfinal())
@@ -141,16 +159,6 @@ dispatcher = updater.dispatcher
 #La función start se le asigna a la funcion start del bot. Esta se llama cuando un usuario utiliza el bot por primera vez
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
-
-
-#Aplico la funcion echo a los mensajes escritos que se reciben
-echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-dispatcher.add_handler(echo_handler)
-
-
-#Anadimos la función de mayusculas al comando /caps del bot
-caps_handler = CommandHandler('caps', caps)
-dispatcher.add_handler(caps_handler)
 
 
 #Añadimos función de guardias disponibles
