@@ -13,18 +13,31 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-#Iniciamos el logging en la ventana de consola para mostrar información
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-
-locale.setlocale(locale.LC_ALL,'es_ES')
 #Cargamos fichero de configuracion
 
 with open('config/config.yaml','r') as configuracion:
     config=yaml.safe_load(configuracion)
+
+if not os.path.exists('log'):
+    os.makedirs('log')
+    logging.info("Directorio log creado")
+
+#Comprobamos si está el nivel
+if "level" in config['log']:
+    nivel_log_num=getattr(logging,config['log']['level'].upper())
+    if not isinstance(nivel_log_num, int):
+        raise ValueError('Nivel de log inválido: %s' % config['log']['level'])
+    logging.basicConfig(filename='log/botguardianes-'+ str(datetime.datetime.today().strftime('%d.%m.%Y')) + '.log', filemode='a', encoding='utf-8',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=nivel_log_num)
+else:
+    logging.basicConfig(filename='log/botguardianes-'+ str(datetime.datetime.today()) + '.log', filemode='a', enconding='utf-8',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.WARNING)
+
+logger = logging.getLogger()
+#logger.setLevel(logging.INFO)
+
+
+locale.setlocale(locale.LC_ALL,'es_ES')
+
 
 logging.debug('Cargado fichero de configuracion config.yaml')
 
@@ -102,7 +115,7 @@ def registro(update, context):
                      text="Introduce tu correo electrónico para registrarte en la plataforma",
                      )
     #Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso, enviaríamos el id
-    
+    print(update.effective_chat.id)
     bot.send_message(chat_id=update.message.chat_id,
                      text="Ha sido registrado en la plataforma, ") #Imprimimos su nombre
 
@@ -122,8 +135,7 @@ def guardiasdisponibles(update, context):
                 lista_botones=lista_botones + [[telegram.InlineKeyboardButton(text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm') ),callback_data=patata) ]]
 
                 cadena=cadena + "\n" +e.name +  " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm')) 
-                #reply_markup
-                #print(update.effective_chat.id)
+                
 
     reply_markup=telegram.InlineKeyboardMarkup(lista_botones)
     bot.send_message(chat_id=update.message.chat_id,

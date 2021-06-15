@@ -1,0 +1,6 @@
+calendarios:
+    id_propuestas: IDCALENDARIOPROPUESTAS
+telegram:
+    token_bot: IDTOKENBOT
+log:
+    level: warning
