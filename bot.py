@@ -1,5 +1,9 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import logging, telegram
+from librerias.acciones_inicio import *
+from librerias.funciones_calendario import *
+from librerias.funciones_telegram import *
+import logging
+import telegram
 import ics
 import datetime
 import pytz
@@ -16,148 +20,26 @@ from google.oauth2.credentials import Credentials
 
 #Cargamos fichero de configuracion
 
-with open('config/config.yaml','r') as configuracion:
-    config=yaml.safe_load(configuracion)
+config=cargar_configuracion('config/config.yaml','r')
 
-if not os.path.exists('log'):
-    os.makedirs('log')
-    logging.info("Directorio log creado")
-
-#Comprobamos si está el nivel
-if "level" in config['log']:
-    nivel_log_num=getattr(logging,config['log']['level'].upper())
-    if not isinstance(nivel_log_num, int):
-        raise ValueError('Nivel de log inválido: %s' % config['log']['level'])
-    logging.basicConfig(filename='log/botguardianes-'+ str(datetime.datetime.today().strftime('%d.%m.%Y')) + '.log', filemode='a', encoding='utf-8',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=nivel_log_num)
-else:
-    logging.basicConfig(filename='log/botguardianes-'+ str(datetime.datetime.today()) + '.log', filemode='a', enconding='utf-8',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.WARNING)
-
-logger = logging.getLogger()
-#logger.setLevel(logging.INFO)
-
-
-locale.setlocale(locale.LC_ALL,'es_ES')
-
-
+logger=crear_log(config)
 logging.debug('Cargado fichero de configuracion config.yaml')
 
 
 #Este es el token del bot que se ha generado con BotFather.
 tokenbot= config['telegram']['token_bot']
-bot=telegram.Bot(token=tokenbot)
+librerias.funciones_telegram.bot=telegram.Bot(token=tokenbot)
 logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
 
-#Cargamos la cuenta de servicio de Google
-SCOPES = ['https://www.googleapis.com/auth/calendar']
-
-creds = None
-# The file token.json stores the user's access and refresh tokens, and is
-# created automatically when the authorization flow completes for the first
-# time.
-if os.path.exists('config/token.json'):
-    creds = Credentials.from_authorized_user_file('config/token.json', SCOPES)
-# If there are no (valid) credentials available, let the user log in.
-if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    else:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            'config/credentials.json', SCOPES)
-        creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open('config/token.json', 'w') as token:
-        token.write(creds.to_json())
-
-#Cargamos el calendario de Google
-service = build('calendar', 'v3', credentials=creds)
-
+librerias.acciones_inicio.service = conectar_google()
 logging.debug('Cargado token de Google')
-cal_principal = service.calendars().get(calendarId='primary').execute()
+cal_principal = librerias.acciones_inicio.service.calendars().get(calendarId='primary').execute()
 logging.debug('Calendario principal cargado')
 
-cal_propuestas = service.calendars().get(calendarId=config['calendarios']['id_propuestas']).execute()
+cal_propuestas = librerias.acciones_inicio.service.calendars().get(calendarId=config['calendarios']['id_propuestas']).execute()
 logging.debug('Calendario de propuestas cargado')
 #Función para calcular el timestamp del primer dia del mes
 
-def timestampmesinicio():
-    fecha=datetime.date.today()
-    tstamp=datetime.datetime(fecha.year,fecha.month,1,0,0,0,tzinfo=pytz.timezone('Europe/Madrid'))
-    return tstamp
-
-#Función para calcular el timestamp del último día del mes
-def timestampmesfinal():
-    fecha=datetime.date.today()
-    tstamp=datetime.datetime(fecha.year,fecha.month,calendar.monthlen(fecha.year,fecha.month),23,59,59,tzinfo=pytz.timezone('Europe/Madrid'))
-    return tstamp
-
-#Creamos una funcion de eco, que repite el mensaje que recibe
-def echo(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
-
-#Esta funcion recibe un mensaje y cambia sus caracteres por mayusculas
-def caps(update, context):
-    text_caps = ' '.join(context.args).upper()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)    
-
-#Esta funcion es la que inicia el bot cuando entra en contacto con un usuario
-def start(update, context):
-    #Aqui creamos el teclado por botones que se le mostraraa al usuario en esta funcion
-    kb = [[telegram.KeyboardButton('/guardiasdisponibles'),telegram.KeyboardButton('/guardiaspropias')],
-          [telegram.KeyboardButton('Boton 3'),telegram.KeyboardButton('Boton 4')]]
-    kb_markup = telegram.ReplyKeyboardMarkup(kb,resize_keyboard=True)
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Seleccione una opción",
-                     reply_markup=kb_markup)
-
-
-def registro(update, context):
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Introduce tu correo electrónico para registrarte en la plataforma",
-                     )
-    #Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso, enviaríamos el id
-    print(update.effective_chat.id)
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Ha sido registrado en la plataforma, ") #Imprimimos su nombre
-
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Su correo no ha sido encontrado en la plataforma. Por favor, consulte al administrador de su sistema para comprobar que sus datos están adecuadamente agregados")
-
-
-#Esta funcion representa las guardias disponibles
-def guardiasdisponibles(update, context):
-    reply_markup=[]
-    lista_botones=[[]]
-    cadena=""
-    service.events()
-    for e in calendario.events:
-        if timestampmesfinal() >e.begin.datetime > timestampmesinicio():
-            if  list(e.attendees) == []:
-                lista_botones=lista_botones + [[telegram.InlineKeyboardButton(text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm') ),callback_data=patata) ]]
-
-                cadena=cadena + "\n" +e.name +  " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm')) 
-                
-
-    reply_markup=telegram.InlineKeyboardMarkup(lista_botones)
-    bot.send_message(chat_id=update.message.chat_id,
-                         text=cadena,
-                         reply_markup=reply_markup
-                         )
-
-def guardiaspropias(update, context):
-    #reply_markup=telegram.InlineKeyboardMarkup([])
-    cadena=""
-    for e in calendario.events:
-        if timestampmesfinal() >e.begin.datetime > timestampmesinicio():
-            #Aqui pediriamos el nombre del usuario a través de REST, usando el id de Telegram como dato
-            nombre_usuario="NOMBRE"
-            if list(e.attendees)[0].common_name == nombre_usuario:
-                #str(e.begin.format('DD-MM-YY HH:mm')) 
-                #reply_markup
-                cadena=cadena + "\n" + e.name + "Asignada a " + list(e.attendees)[0].common_name + " en fecha: " +str(e.begin.format('DD-MM-YY HH:mm'))
-
-    bot.send_message(chat_id=update.message.chat_id,
-                         text=cadena
-                         )
     
 
 
