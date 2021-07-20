@@ -12,11 +12,7 @@ import arrow
 import locale
 import yaml
 import os.path
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
+
 
 #Cargamos fichero de configuracion
 
@@ -31,7 +27,7 @@ tokenbot= config['telegram']['token_bot']
 librerias.funciones_telegram.bot=telegram.Bot(token=tokenbot)
 logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
 
-librerias.acciones_inicio.service = conectar_google()
+
 logging.debug('Cargado token de Google')
 cal_principal = librerias.acciones_inicio.service.calendars().get(calendarId='primary').execute()
 logging.debug('Calendario principal cargado')

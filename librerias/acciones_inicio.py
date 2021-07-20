@@ -3,12 +3,8 @@ import locale
 import os.path
 import datetime
 import logging
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-global service
+import ics
+import requests
 def cargar_configuracion(directorio,modo):
     locale.setlocale(locale.LC_ALL,'es_ES')
     with open(directorio,modo) as configuracion:
@@ -33,30 +29,12 @@ def crear_log(config):
     logger = logging.getLogger()
     #logger.setLevel(logging.INFO)
     return logger
-def conectar_google():
-    #Cargamos la cuenta de servicio de Google
-    SCOPES = ['https://www.googleapis.com/auth/calendar']
-
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    #Comentar
-    if os.path.exists('config/token.json'):
-        creds = Credentials.from_authorized_user_file('config/token.json', SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'config/credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('config/token.json', 'w') as token:
-            token.write(creds.to_json())
-
-    #Cargamos el calendario de Google
-    service = build('calendar', 'v3', credentials=creds)
-    return service
-   
+def cargar_calendarios(config):
+    if "url_definitivos" in config['calendarios']:
+        calendario_principal= ics.Calendar(requests.get(config['calendarios']['url_definitivos']).text,auth=(config['calendarios']['usuario'].text,config['calendarios']['contraseña'].text))
+    else:
+        logging.error('No está definida la url del calendario principal en config.yaml')
+    if "url_propuestas" in config['calendarios']:
+        calendario_propuestas= ics.Calendar(requests.get(config['calendarios']['url_propuestas']).text, auth=(config['calendarios']['usuario'].text,config['calendarios']['contraseña'].text))
+    else:  
+        logging.error('No está definida la url del calendario de propuestas en config.yaml')
