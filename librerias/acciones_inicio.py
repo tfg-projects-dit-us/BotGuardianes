@@ -5,6 +5,8 @@ import datetime
 import logging
 import ics
 import requests
+import sys
+
 def cargar_configuracion(directorio,modo):
     locale.setlocale(locale.LC_ALL,'es_ES')
     with open(directorio,modo) as configuracion:
@@ -29,12 +31,20 @@ def crear_log(config):
     logger = logging.getLogger()
     #logger.setLevel(logging.INFO)
     return logger
+
 def cargar_calendarios(config):
-    if "url_definitivos" in config['calendarios']:
-        calendario_principal= ics.Calendar(requests.get(config['calendarios']['url_definitivos']).text,auth=(config['calendarios']['usuario'].text,config['calendarios']['contraseña'].text))
-    else:
-        logging.error('No está definida la url del calendario principal en config.yaml')
-    if "url_propuestas" in config['calendarios']:
-        calendario_propuestas= ics.Calendar(requests.get(config['calendarios']['url_propuestas']).text, auth=(config['calendarios']['usuario'].text,config['calendarios']['contraseña'].text))
-    else:  
-        logging.error('No está definida la url del calendario de propuestas en config.yaml')
+    calendario_principal=None
+    calendario_propuestas=None
+    try:
+        if "url_definitivos" in config['calendarios'] and "usuario" in config['calendarios'] and "contraseña" in config['calendarios']:
+            calendario_principal= ics.Calendar(requests.get(config['calendarios']['url_definitivos'],auth=(config['calendarios']['usuario'],config['calendarios']['contraseña'])).text)
+        else:
+            logging.error('No está definida la url del calendario principal en config.yaml')
+        if "url_propuestas" in config['calendarios'] and "usuario" in config['calendarios'] and "contraseña" in config['calendarios']:
+            calendario_propuestas= ics.Calendar(requests.get(config['calendarios']['url_propuestas'],auth=(config['calendarios']['usuario'],config['calendarios']['contraseña'])).text)
+        else:  
+            logging.error('No está definida la url del calendario de propuestas en config.yaml')
+        if calendario_principal and calendario_propuestas:
+            return calendario_principal,calendario_propuestas
+    except:
+        sys.exit("Alguno de los dos calendarios no se ha cargado")

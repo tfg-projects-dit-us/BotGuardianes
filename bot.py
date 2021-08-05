@@ -1,5 +1,5 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from librerias.acciones_inicio import *
+import librerias.acciones_inicio
 from librerias.funciones_calendario import *
 from librerias.funciones_telegram import *
 import logging
@@ -16,9 +16,9 @@ import os.path
 
 #Cargamos fichero de configuracion
 
-config=cargar_configuracion('config/config.yaml','r')
+global config=librerias.acciones_inicio.cargar_configuracion('config/config.yaml','r')
 
-logger=crear_log(config)
+global logger=librerias.acciones_inicio.crear_log(config)
 logging.debug('Cargado fichero de configuracion config.yaml')
 
 
@@ -29,25 +29,23 @@ logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
 
 
 logging.debug('Cargado token de Google')
-cal_principal = librerias.acciones_inicio.service.calendars().get(calendarId='primary').execute()
-logging.debug('Calendario principal cargado')
-
-cal_propuestas = librerias.acciones_inicio.service.calendars().get(calendarId=config['calendarios']['id_propuestas']).execute()
-logging.debug('Calendario de propuestas cargado')
+cal_principal,cal_propuestas= librerias.acciones_inicio.cargar_calendarios(config)
+logging.debug('Calendarios cargados')
+print("Calendarios cargados. Iniciado correctamente")
 #Función para calcular el timestamp del primer dia del mes
 
     
 
 
 #print(cal_principal.events)
-print(datetime.datetime.now())
-print(timestampmesinicio())
-print(timestampmesfinal())
+#print(datetime.datetime.now())
+#print(timestampmesinicio())
+#print(timestampmesfinal())
 updater = Updater(token=tokenbot, use_context=True)
 dispatcher = updater.dispatcher
 
-#La función start se le asigna a la funcion start del bot. Esta se llama cuando un usuario utiliza el bot por primera vez
-start_handler = CommandHandler('start', start)
+#La función registro se le asigna a la funcion start del bot. Esta se llama cuando un usuario utiliza el bot por primera vez
+start_handler = CommandHandler('start', registro)
 dispatcher.add_handler(start_handler)
 
 

@@ -5,7 +5,11 @@ import telegram
 import pytz
 import calendar
 import arrow
+import requests
+
 global bot
+
+
 def timestampmesinicio():
     fecha=datetime.date.today()
     tstamp=datetime.datetime(fecha.year,fecha.month,1,0,0,0,tzinfo=pytz.timezone('Europe/Madrid'))
@@ -27,28 +31,37 @@ def caps(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)    
 
 #Esta funcion es la que inicia el bot cuando entra en contacto con un usuario
-def start(update, context):
-    #Aqui creamos el teclado por botones que se le mostraraa al usuario en esta funcion
+
+
+
+def registro(update, context):
+    bot.send_message(chat_id=update.message.chat_id,
+                     text="Introduce tu correo electrónico para registrarte en la plataforma",reply_markup=ForceReply()
+                     )
+    if (update.Message.ReplyToMessage.Text.Contains('@')):
+
+        try:
+            #Aqui pedimos a la API Rest la ID del usuario con su email
+            respuesta=requests.GET(config['REST']['url_getIDporemail'], auth=HTTPBasicAuth(config['REST']['usuario'],config['REST']['contraseña']), data={'email': update.Message.ReplyToMessage.Text})
+            idusuario=respuesta.text()
+            print(idusuario)
+            respuesta=requests.PUT(config['REST']['url_insertartelegramID']+ '/'+ idusuario, auth=HTTPBasicAuth(config['REST']['usuario'],config['REST']['contraseña']), data = update.effective_chat.id)
+            #Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso, enviaríamos el id
+            bot.send_message(chat_id=update.message.chat_id,
+                             text="Ha sido registrado en la plataforma, ") #Imprimimos su nombre
+
+            bot.send_message(chat_id=update.message.chat_id,
+                             text="Su correo no ha sido encontrado en la plataforma. Por favor, consulte al administrador de su sistema para comprobar que sus datos están adecuadamente agregados")
+        except:
+            bot.send_message(chat_id=update.message.chat_id,
+                             text="Ha habido un error en la plataforma")
+            logger.error('Error al hacer conexión con la API')
     kb = [[telegram.KeyboardButton('/guardiasdisponibles'),telegram.KeyboardButton('/guardiaspropias')],
           [telegram.KeyboardButton('Boton 3'),telegram.KeyboardButton('Boton 4')]]
     kb_markup = telegram.ReplyKeyboardMarkup(kb,resize_keyboard=True)
     bot.send_message(chat_id=update.message.chat_id,
                      text="Seleccione una opción",
                      reply_markup=kb_markup)
-
-
-def registro(update, context):
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Introduce tu correo electrónico para registrarte en la plataforma",
-                     )
-    #Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso, enviaríamos el id
-    print(update.effective_chat.id)
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Ha sido registrado en la plataforma, ") #Imprimimos su nombre
-
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Su correo no ha sido encontrado en la plataforma. Por favor, consulte al administrador de su sistema para comprobar que sus datos están adecuadamente agregados")
-
 
 #Esta funcion representa las guardias disponibles
 def guardiasdisponibles(update, context):

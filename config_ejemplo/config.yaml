@@ -1,7 +1,11 @@
 calendarios:
-    url_propuestas: http://40.114.254.128/caldav.php/usuario/calendar/propuestas
-    url_definitivos: http://40.114.254.128/caldav.php/usuario/calendar/guardias 
+    url_propuestas: URL
+    url_definitivos: URL 
 telegram:
     token_bot: IDTOKENBOT
 log:
     level: warning
+REST:
+    url: URL
+    contraseña: CONTRASEÑA
+    usuario: USUARIO
