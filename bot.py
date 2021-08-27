@@ -15,10 +15,11 @@ import os.path
 
 
 #Cargamos fichero de configuracion
+global config
+global logger
 
-global config=librerias.acciones_inicio.cargar_configuracion('config/config.yaml','r')
-
-global logger=librerias.acciones_inicio.crear_log(config)
+config = librerias.acciones_inicio.cargar_configuracion('config/config.yaml','r')
+logger = librerias.acciones_inicio.crear_log(config)
 logging.debug('Cargado fichero de configuracion config.yaml')
 
 
