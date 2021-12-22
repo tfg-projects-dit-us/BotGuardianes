@@ -1,11 +1,14 @@
 calendarios:
     url_propuestas: URL
     url_definitivos: URL 
+    usuario: usuario
+    contrasena: contrasena
 telegram:
     token_bot: IDTOKENBOT
 log:
     level: warning
 REST:
-    url: URL
-    contraseña: CONTRASEÑA
+    url_insertartelegramID: URL
+    url_getIDporemail: URL
+    contrasena: contrasena
     usuario: USUARIO

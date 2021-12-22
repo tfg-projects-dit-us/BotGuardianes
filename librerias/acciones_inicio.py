@@ -6,6 +6,7 @@ import logging
 import ics
 import requests
 import sys
+import librerias.comun
 
 def cargar_configuracion(directorio,modo):
     locale.setlocale(locale.LC_ALL,'es_ES')
@@ -35,13 +36,16 @@ def crear_log(config):
 def cargar_calendarios(config):
     calendario_principal=None
     calendario_propuestas=None
-    try:
-        if "url_definitivos" in config['calendarios'] and "usuario" in config['calendarios'] and "contraseña" in config['calendarios']:
-            calendario_principal= ics.Calendar(requests.get(config['calendarios']['url_definitivos'],auth=(config['calendarios']['usuario'],config['calendarios']['contraseña'])).text)
+    logging.debug(config['calendarios']['url_definitivos'] + ' ' + config['calendarios']['usuario'] + ' ' +config['calendarios']['contrasena'])
+
+    try:           
+
+        if "url_definitivos" in config['calendarios'] and "usuario" in config['calendarios'] and "contrasena" in config['calendarios']:
+            calendario_principal= ics.Calendar(requests.get(config['calendarios']['url_definitivos'],auth=(config['calendarios']['usuario'],config['calendarios']['contrasena'])).text)
         else:
             logging.error('No está definida la url del calendario principal en config.yaml')
-        if "url_propuestas" in config['calendarios'] and "usuario" in config['calendarios'] and "contraseña" in config['calendarios']:
-            calendario_propuestas= ics.Calendar(requests.get(config['calendarios']['url_propuestas'],auth=(config['calendarios']['usuario'],config['calendarios']['contraseña'])).text)
+        if "url_propuestas" in config['calendarios'] and "usuario" in config['calendarios'] and "contrasena" in config['calendarios']:
+            calendario_propuestas= ics.Calendar(requests.get(config['calendarios']['url_propuestas'],auth=(config['calendarios']['usuario'],config['calendarios']['contrasena'])).text)
         else:  
             logging.error('No está definida la url del calendario de propuestas en config.yaml')
         if calendario_principal and calendario_propuestas:

@@ -6,8 +6,7 @@ import pytz
 import calendar
 import arrow
 import requests
-
-global bot
+import librerias.comun
 
 
 def timestampmesinicio():
@@ -36,39 +35,55 @@ def caps(update, context):
 
 def registro(update, context):
     bot.send_message(chat_id=update.message.chat_id,
-                     text="Introduce tu correo electrónico para registrarte en la plataforma",reply_markup=ForceReply()
+                     text="Introduce tu correo electrónico para registrarte en la plataforma",reply_markup=telegram.ForceReply()
                      )
-    if (update.Message.ReplyToMessage.Text.Contains('@')):
+    return 1
+
+
+
+
+def registro_paso2(update,context):
+    if (update.message.reply_to_message.text.contains('@')):
 
         try:
             #Aqui pedimos a la API Rest la ID del usuario con su email
-            respuesta=requests.GET(config['REST']['url_getIDporemail'], auth=HTTPBasicAuth(config['REST']['usuario'],config['REST']['contraseña']), data={'email': update.Message.ReplyToMessage.Text})
+            respuesta=requests.GET(config['REST']['url_getIDporemail'], auth=HTTPBasicAuth(config['REST']['usuario'],config['REST']['contrasena']), data={'email': update.Message.ReplyToMessage.Text})
             idusuario=respuesta.text()
             print(idusuario)
-            respuesta=requests.PUT(config['REST']['url_insertartelegramID']+ '/'+ idusuario, auth=HTTPBasicAuth(config['REST']['usuario'],config['REST']['contraseña']), data = update.effective_chat.id)
+            respuesta=requests.PUT(config['REST']['url_insertartelegramID']+ '/'+ idusuario, auth=HTTPBasicAuth(config['REST']['usuario'],config['REST']['contrasena']), data = update.effective_chat.id)
             #Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso, enviaríamos el id
             bot.send_message(chat_id=update.message.chat_id,
                              text="Ha sido registrado en la plataforma, ") #Imprimimos su nombre
 
             bot.send_message(chat_id=update.message.chat_id,
                              text="Su correo no ha sido encontrado en la plataforma. Por favor, consulte al administrador de su sistema para comprobar que sus datos están adecuadamente agregados")
+
+            kb = [[
+                telegram.KeyboardButton('/guardiasdisponibles'),telegram.KeyboardButton('/guardiaspropias')],
+          [telegram.KeyboardButton('Boton 3'),telegram.KeyboardButton('Boton 4')
+           ]]
+
+            kb_markup = telegram.ReplyKeyboardMarkup(kb,resize_keyboard=True)
+
+            bot.send_message(chat_id=update.message.chat_id,
+                     text="Seleccione una opción",
+                     reply_markup=kb_markup)
+            return ConversationHandler.END
         except:
             bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error en la plataforma")
             logger.error('Error al hacer conexión con la API')
-    kb = [[telegram.KeyboardButton('/guardiasdisponibles'),telegram.KeyboardButton('/guardiaspropias')],
-          [telegram.KeyboardButton('Boton 3'),telegram.KeyboardButton('Boton 4')]]
-    kb_markup = telegram.ReplyKeyboardMarkup(kb,resize_keyboard=True)
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Seleccione una opción",
-                     reply_markup=kb_markup)
 
+    else:
+        update.message.reply_text('La cadena no tiene un @. Intente de nuevo enviar su correo')
+        return CORREO
+    
 #Esta funcion representa las guardias disponibles
 def guardiasdisponibles(update, context):
     reply_markup=[]
     lista_botones=[[]]
     cadena=""
-    events=librerias.acciones_inicio.service.events().list(calendarId='primary').execute()
+    events=cal_principal.events
     for e in events['items']:
         if timestampmesfinal() > pytz.timezone('Europe/Madrid').localize(datetime.datetime.strptime(e['start']['date'],'%Y-%m-%d')) > timestampmesinicio():
             if  list(e['attendees']) == []:
