@@ -21,6 +21,7 @@ import argparse
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(description='Bot de telegram para gestion de guardias hospitalarias')
     parser.add_argument('--config',help="Fichero de configuracion (Por defecto en config/config.yaml)",type=open)
+    
     config = librerias.acciones_inicio.cargar_configuracion('config/config.yaml','r')
     logger = librerias.acciones_inicio.crear_log(config)
     logging.debug('Cargado fichero de configuracion config.yaml')
