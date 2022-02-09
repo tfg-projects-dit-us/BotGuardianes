@@ -58,10 +58,16 @@ def registro_paso2(update,context):
             bot.send_message(chat_id=update.message.chat_id,
                              text="Su correo no ha sido encontrado en la plataforma. Por favor, consulte al administrador de su sistema para comprobar que sus datos están adecuadamente agregados")
 
-            kb = [[
-                telegram.KeyboardButton('/guardiasdisponibles'),telegram.KeyboardButton('/guardiaspropias')],
-          [telegram.KeyboardButton('Boton 3'),telegram.KeyboardButton('Boton 4')
-           ]]
+            kb = [
+                    [
+                        telegram.KeyboardButton('/guardiasdisponibles'),
+                        telegram.KeyboardButton('/guardiaspropias')
+                    ],
+                    [
+                        telegram.KeyboardButton('Boton 3'),
+                        telegram.KeyboardButton('Boton 4')
+                     ]
+                ]
 
             kb_markup = telegram.ReplyKeyboardMarkup(kb,resize_keyboard=True)
 
@@ -73,10 +79,11 @@ def registro_paso2(update,context):
             bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error en la plataforma")
             logger.error('Error al hacer conexión con la API')
+            return ConversationHandler.END
 
     else:
         update.message.reply_text('La cadena no tiene un @. Intente de nuevo enviar su correo')
-        return CORREO
+        return 1
     
 #Esta funcion representa las guardias disponibles
 def guardiasdisponibles(update, context):
