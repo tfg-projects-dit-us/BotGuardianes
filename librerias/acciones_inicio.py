@@ -21,7 +21,7 @@ def crear_log(config):
         logging.info("Directorio log creado")
 
     #Comprobamos si está el nivel
-    if "level" in config['log']:
+    if( "level" in config['log']):
         nivel_log_num=getattr(logging,config['log']['level'].upper())
         if not isinstance(nivel_log_num, int):
             raise ValueError('Nivel de log inválido: %s' % config['log']['level'])

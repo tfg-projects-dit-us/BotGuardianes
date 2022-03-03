@@ -6,30 +6,54 @@ import logging
 import ics
 import requests
 import sys
+
+
 class config:
-    def __init__(self,logger=None,directorio=None):
+    configfile = None
+    logger = None
+    directorio = None
+
+    def __init__(self, logger=None, directorio=None):
         self.directorio = directorio
         self.logger = logger
-        self.configuracion=configuracion
+        self.cargar_configuracion_lectura()
+        self.crear_log()
 
-    def cargar_configuracion_lectura(directorio):
-        locale.setlocale(locale.LC_ALL,'es_ES')
-        with open(directorio,'r') as configuracion:
-            config=yaml.safe_load(configuracion)
+    def cargar_configuracion_lectura(self, directorio=None):
+        locale.setlocale(locale.LC_ALL, 'es_ES')
+        try:
+            if (directorio == None and self.directorio != None):
+                with open(self.directorio, 'r') as configuracion:
+                    self.configfile = yaml.safe_load(configuracion)
+            elif (directorio != None):
+                with open(directorio, 'r') as configuracion:
+                    self.configfile = yaml.safe_load(configuracion)
 
-        return config
-    def crear_log(config):
+        except Exception as e:
+            logging.error("Error durante la carga de configuracion: " + str(e))
+        return self.configfile
+
+    def crear_log(self, config=None):
+        if (config != None):
+            self.configfile = config
+
         if not os.path.exists('log'):
             os.makedirs('log')
             logging.info("Directorio log creado")
-
-        #Comprobamos si est· el nivel
-        if "level" in config['log']:
-            nivel_log_num=getattr(logging,config['log']['level'].upper())
+        # Comprobamos si est√° el nivel
+        if 'level' in self.configfile['log']:
+            nivel_log_num = getattr(logging, self.configfile['log']['level'].upper())
             if not isinstance(nivel_log_num, int):
-                raise ValueError('Nivel de log inv·lido: %s' % config['log']['level'])
-            logging.basicConfig(filename='log/botguardianes-'+ str(datetime.datetime.today().strftime('%d.%m.%Y')) + '.log', filemode='a', encoding='utf-8',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=nivel_log_num)
+                raise ValueError('Nivel de log invalido: %s' % self.configfile['log']['level'])
+            logging.basicConfig(
+                filename='log/botguardianes-' + str(datetime.datetime.today().strftime('%d.%m.%Y')) + '.log',
+                filemode='a', encoding='utf-8', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                level=nivel_log_num)
         else:
-            logging.basicConfig(filename='log/botguardianes-'+ str(datetime.datetime.today()) + '.log', filemode='a', enconding='utf-8',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.WARNING)
+            logging.basicConfig(
+                filename='log/botguardianes-' + str(datetime.datetime.today().strftime('%d.%m.%Y')) + '.log',
+                filemode='a', enconding='utf-8', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                level=logging.WARNING)
 
         self.logger = logging.getLogger()
+        logging.debug(str(self.configfile))
