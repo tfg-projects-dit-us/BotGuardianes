@@ -12,7 +12,7 @@ import os.path
 import argparse
 from objetos.telegram_tools import telegram_tools
 from objetos.config import config
-from objetos.servicio_rest import servicio_rest
+from objetos import servicio_rest
 from objetos.calendario import calendario
 
 if __name__ == '__main__':
@@ -27,6 +27,12 @@ if __name__ == '__main__':
     # Este es el token del bot que se ha generado con BotFather.
     logging.debug(str(config.configfile))
     tokenbot = configuracion.configfile['telegram']['token_bot']
+    servicio_rest(usuario=configuracion.configfile['REST']['usuario'],
+                  password=configuracion.configfile['REST']['contrasena'],
+                  logger=logger, url_inserta=configuracion.configfile['REST']['url_insertartelegramID'],
+                  url_getID=configuracion.configfile['REST']['url_getIDporemail']
+                  )
+
     Bot = telegram.Bot(token=tokenbot)
     telegram_tools(token_bot=tokenbot, logger=logger, bot=Bot)
     logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
@@ -58,6 +64,7 @@ if __name__ == '__main__':
     )
     dispatcher.add_handler(conv_handler)
 
+    botones_handler = CommandHandler('botones', telegram_tools.guardiasdisponibles)
     # Añadimos función de guardias disponibles
     gdisp_handler = CommandHandler('guardias_disponibles', telegram_tools.guardiasdisponibles)
     dispatcher.add_handler(gdisp_handler)
