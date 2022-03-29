@@ -10,7 +10,7 @@ import locale
 import yaml
 import os.path
 import argparse
-from objetos.telegram_tools import telegram_tools
+from objetos import telegram_tools
 from objetos.config import config
 from objetos import servicio_rest
 from objetos.calendario import calendario
@@ -27,21 +27,23 @@ if __name__ == '__main__':
     # Este es el token del bot que se ha generado con BotFather.
     logging.debug(str(config.configfile))
     tokenbot = configuracion.configfile['telegram']['token_bot']
-    servicio_rest(usuario=configuracion.configfile['REST']['usuario'],
-                  password=configuracion.configfile['REST']['contrasena'],
-                  logger=logger, url_inserta=configuracion.configfile['REST']['url_insertartelegramID'],
-                  url_getID=configuracion.configfile['REST']['url_getIDporemail']
-                  )
+    servicio_rest.start(user=configuracion.configfile['REST']['usuario'],
+                    contrasena=configuracion.configfile['REST']['contrasena'],
+                    inserta=configuracion.configfile['REST']['url_insertartelegramID'],
+                    getID=configuracion.configfile['REST']['url_getIDporemail'],
+                    getnombre=configuracion.configfile['REST']['url_getnombreporid']
+                    )
 
-    Bot = telegram.Bot(token=tokenbot)
-    telegram_tools(token_bot=tokenbot, logger=logger, bot=Bot)
-    logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
+
 
     logging.debug('Cargado token de API REST')
     cal_principal=calendario(url=configuracion.configfile['calendarios']['url_definitivos'], user= configuracion.configfile['calendarios']['usuario'], password=configuracion.configfile['calendarios']['contrasena'])
     cal_propuestas = calendario(url=str(configuracion.configfile['calendarios']['url_propuestas']), user= configuracion.configfile['calendarios']['usuario'], password=configuracion.configfile['calendarios']['contrasena'])
 
     logging.debug('Calendarios cargados')
+    Bot = telegram.Bot(token=tokenbot)
+    telegram_tools.start(token_bot=tokenbot, logger=logger, bot=Bot,calprin=cal_principal,cal_prop=cal_propuestas)
+    logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
     print("Calendarios cargados. Iniciado correctamente")
     # Función para calcular el timestamp del primer dia del mes
 
@@ -66,7 +68,7 @@ if __name__ == '__main__':
 
     botones_handler = CommandHandler('botones', telegram_tools.guardiasdisponibles)
     # Añadimos función de guardias disponibles
-    gdisp_handler = CommandHandler('guardias_disponibles', telegram_tools.guardiasdisponibles)
-    dispatcher.add_handler(gdisp_handler)
+    #gdisp_handler = CommandHandler('guardias-disponibles', telegram_tools.guardiasdisponibles)
+    dispatcher.add_handler(botones_handler)
 
     updater.start_polling()

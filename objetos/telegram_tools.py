@@ -7,20 +7,25 @@ import pytz
 import calendar
 import arrow
 import requests
-import servicio_rest
+from objetos import servicio_rest
 
 
 
 token_bot=None
 bot=None
+logger=None
+tokenbot=None
+cal_principal=None
+cal_propuestas=none
+def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None):
+    global tokenbot,bot,cal_principal,cal_propuestas
 
-def __init__(update, token_bot=None, logger=None, bot=None):
-    update.logger = logger
-    update.token_bot = token_bot
-    if (bot is None and token_bot is not None):
-        update.bot = telegram.Bot(token=update.token_bot)
+    logger = logger
+    tokenbot = token_bot
+    if (bottelegram is None and token_bot is not None):
+        bot = telegram.Bot(token=telegram.update.tokenbot)
     else:
-        update.bot = bot
+        bot = bottelegram
 
 # Creamos una funcion de eco, que repite el mensaje que recibe
 def echo(update, context):
@@ -42,26 +47,31 @@ def registro(update, context):
 
 def registro_paso2(update, context):
     logging.info(update.message.text)
+    idusuario=False
     if ("@" in update.message.text):
 
         try:
             # Aqui pedimos a la API Rest la ID del usuario con su email
             respuesta = servicio_rest.GetIDPorEmail(email=update.message.text)
-            idusuario = respuesta.text()
-            logging.info(idusuario)
-            logging.info(update.effective_chat.id)
-            respuesta = servicio_rest.InsertaTelegramID(idusuario=idusuario, chatid=update.effective_chat.id)
+            logging.debug("Respuesta a GETIDPorEmail es:" + str(respuesta) + " tipo " + str(respuesta.isdigit()))
+            if respuesta.isdigit():
+                idusuario = respuesta
+            elif "Could not fing a doctor with email:" in respuesta:
+                context.bot.send_message(chat_id=update.message.chat_id,
+                                        text="Su correo no ha sido encontrado en la plataforma.Por favor, consulte al "
+                                             "administrador de su sistema para comprobar que sus datos estan adecuadamente "
+                                             "agregados")
+            if idusuario!= False:
+                logging.info(idusuario)
+                logging.info(update.effective_chat.id)
+                respuesta = servicio_rest.InsertaTelegramID(idusuario=str(idusuario), chatid=update.effective_chat.id)
+                logging.debug("Valor de respuesta " + str(respuesta))
+                # Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso,
+                # enviaríamos el id
+                if respuesta.lower()=='true':
+                    context.bot.send_message(chat_id=update.message.chat_id,
+                                     text="Ha sido registrado en la plataforma, " + servicio_rest.GetNombrePorID(idusuario))  # Imprimimos su nombre
 
-            # Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso,
-            # enviaríamos el id
-
-            update.bot.send_message(chat_id=update.message.chat_id,
-                             text="Ha sido registrado en la plataforma, ")  # Imprimimos su nombre
-
-            update.bot.send_message(chat_id=update.message.chat_id,
-                             text="Su correo no ha sido encontrado en la plataforma.Por favor, consulte al "
-                                  "administrador de su sistema para comprobar que sus datos estan adecuadamente "
-                                  "agregados")
 
             kb = [
                 [
@@ -76,7 +86,7 @@ def registro_paso2(update, context):
 
             kb_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
 
-            update.bot.send_message(chat_id=update.message.chat_id,
+            context.bot.send_message(chat_id=update.message.chat_id,
                              text="Seleccione una opcion",
                              reply_markup=kb_markup)
             return ConversationHandler.END
