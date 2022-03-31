@@ -16,11 +16,12 @@ bot=None
 logger=None
 tokenbot=None
 cal_principal=None
-cal_propuestas=none
+cal_propuestas=None
 def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None):
     global tokenbot,bot,cal_principal,cal_propuestas
+    cal_principal=cal_prim
+    cal_propuestas=cal_prop
 
-    logger = logger
     tokenbot = token_bot
     if (bottelegram is None and token_bot is not None):
         bot = telegram.Bot(token=telegram.update.tokenbot)
@@ -102,13 +103,14 @@ def registro_paso2(update, context):
 
 # Esta funcion representa las guardias disponibles
 def guardiasdisponibles(update, context):
+    global cal_principal,cal_propuestas
     reply_markup = []
     lista_botones = [[]]
     cadena = ""
-    events = cal_principal.events
+    events = cal_principal.calendario.events
     for e in events['items']:
-        if timestampmesfinal() > pytz.timezone('Europe/Madrid').localize(
-                datetime.datetime.strptime(e['start']['date'], '%Y-%m-%d')) > timestampmesinicio():
+        if cal_principal.timestampmesfinal() > pytz.timezone('Europe/Madrid').localize(
+                datetime.datetime.strptime(e['start']['date'], '%Y-%m-%d')) >cal_principal.timestampmesinicio():
             if list(e['attendees']) == []:
                 lista_botones = lista_botones + [[telegram.InlineKeyboardButton(
                     text=e.name + " - " + str(e['start']['date'].format('DD-MM-YY HH:mm')), callback_data=patata)]]
@@ -117,16 +119,16 @@ def guardiasdisponibles(update, context):
 
     reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
     if cadena == "":
-        context.bot.send_message(chat_id=self.message.chat_id, text="No hay guardias disponibles")
+        context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
 
     else:
-        context.bot.send_message(chat_id=self.message.chat_id, text=cadena, reply_markup=reply_markup)
+        context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
 
 def guardiaspropias(update, context):
     # reply_markup=telegram.InlineKeyboardMarkup([])
     cadena = ""
-    for e in calendario.events:
-        if timestampmesfinal() > e.begin.datetime > timestampmesinicio():
+    for e in cal_principal.calendario.events:
+        if  cal_principal.timestampmesfinal() > e.begin.datetime > cal_principal.timestampmesinicio():
             # Aqui pediriamos el nombre del usuario a traves de REST, usando el id de Telegram como dato
             nombre_usuario = "NOMBRE"
             if list(e.attendees)[0].common_name == nombre_usuario:

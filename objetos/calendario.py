@@ -30,9 +30,10 @@ class calendario:
     def timestampmesinicio(self):
         fecha = datetime.date.today()
         self.tsini = datetime.datetime(fecha.year, fecha.month, 1, 0, 0, 0, tzinfo=pytz.timezone('Europe/Madrid'))
-
+        return self.tsini
     # Función para calcular el timestamp del último día del mes
     def timestampmesfinal(self):
         fecha = datetime.date.today()
         self.tsfin = datetime.datetime(fecha.year, fecha.month, calendar.monthrange(fecha.year, fecha.month)[1], 23, 59,
                                        59, tzinfo=pytz.timezone('Europe/Madrid'))
+        return self.tsfin
