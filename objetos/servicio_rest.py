@@ -64,3 +64,17 @@ def GetNombrePorID(id):
         logging.error("Error obteniendo nombre del doctor " + str(e))
 
     return nombre
+
+def GetEmailPorID(id):
+    respuesta=None
+    email=None
+    try:
+        respuesta=requests.get(url_getnombre+'/'+str(id),
+                               auth=HTTPBasicAuth(usuario,password)
+                               ).json()
+        logging.debug("Respuesta de NombrePorID: " +str(respuesta))
+        email=str(respuesta.get('email'))
+    except Exception as e:
+        logging.error("Error obteniendo nombre del doctor " + str(e))
+
+    return email

@@ -1,4 +1,4 @@
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler)
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler)
 import logging
 import telegram
 import ics
@@ -39,10 +39,9 @@ if __name__ == '__main__':
     logging.debug('Cargado token de API REST')
     cal_principal=calendario(url=configuracion.configfile['calendarios']['url_definitivos'], user= configuracion.configfile['calendarios']['usuario'], password=configuracion.configfile['calendarios']['contrasena'])
     cal_propuestas = calendario(url=str(configuracion.configfile['calendarios']['url_propuestas']), user= configuracion.configfile['calendarios']['usuario'], password=configuracion.configfile['calendarios']['contrasena'])
-
     logging.debug('Calendarios cargados')
     Bot = telegram.Bot(token=tokenbot)
-    telegram_tools.start(token_bot=tokenbot, logger=logger, bot=Bot,calprin=cal_principal,cal_prop=cal_propuestas)
+    telegram_tools.start(token_bot=tokenbot, logger=logger, bottelegram=Bot,cal_prim=cal_principal,cal_prop=cal_propuestas)
     logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
     print("Calendarios cargados. Iniciado correctamente")
     # Función para calcular el timestamp del primer dia del mes
@@ -68,7 +67,11 @@ if __name__ == '__main__':
 
     botones_handler = CommandHandler('botones', telegram_tools.guardiasdisponibles)
     # Añadimos función de guardias disponibles
-    #gdisp_handler = CommandHandler('guardias-disponibles', telegram_tools.guardiasdisponibles)
+    gdisp_handler = CommandHandler('guardias_disponibles', telegram_tools.guardiasdisponibles)
     dispatcher.add_handler(botones_handler)
-
+    dispatcher.add_handler(gdisp_handler)
+    gdisp_handler = CommandHandler('guardias_propias', telegram_tools.guardiaspropias)
+    dispatcher.add_handler(gdisp_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.callback)
+    dispatcher.add_handler(callback_handler)
     updater.start_polling()

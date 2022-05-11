@@ -17,6 +17,7 @@ logger=None
 tokenbot=None
 cal_principal=None
 cal_propuestas=None
+idtest=22
 def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None):
     global tokenbot,bot,cal_principal,cal_propuestas
     cal_principal=cal_prim
@@ -36,7 +37,7 @@ def echo(update, context):
 # Esta funcion recibe un mensaje y cambia sus caracteres por mayusculas
 def caps(update, context):
     text_caps = ' '.join(context.args).upper()
-    context.bot.send_message(chat_id=self.effective_chat.id, text=text_caps)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)
 
     # Esta funcion es la que inicia el bot cuando entra en contacto con un usuario
 
@@ -76,8 +77,8 @@ def registro_paso2(update, context):
 
             kb = [
                 [
-                    telegram.KeyboardButton('/guardiasdisponibles'),
-                    telegram.KeyboardButton('/guardiaspropias')
+                    telegram.KeyboardButton('/guardias_disponibles'),
+                    telegram.KeyboardButton('/guardias_propias')
                 ],
                 [
                     telegram.KeyboardButton('Boton 3'),
@@ -106,37 +107,53 @@ def guardiasdisponibles(update, context):
     global cal_principal,cal_propuestas
     reply_markup = []
     lista_botones = [[]]
+    calendario=cal_principal
     cadena = ""
-    events = cal_principal.calendario.events
-    for e in events['items']:
-        if cal_principal.timestampmesfinal() > pytz.timezone('Europe/Madrid').localize(
-                datetime.datetime.strptime(e['start']['date'], '%Y-%m-%d')) >cal_principal.timestampmesinicio():
-            if list(e['attendees']) == []:
-                lista_botones = lista_botones + [[telegram.InlineKeyboardButton(
-                    text=e.name + " - " + str(e['start']['date'].format('DD-MM-YY HH:mm')), callback_data=patata)]]
+    lista_eventos=cal_principal.get_eventos()
+    for e in lista_eventos:
+        lista_botones = lista_botones + [[telegram.InlineKeyboardButton(
+                    text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm')), callback_data=e.uid)]]
 
-                cadena = cadena + "\n" + e['name'] + " en fecha: " + str(e['begin'].format('DD-MM-YY HH:mm'))
+        cadena = cadena + "\n" + e.name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
 
     reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
     if cadena == "":
         context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
-
+        logging.debug("No hay guardias disponibles")
     else:
         context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
+        logging.debug(cadena)
 
 def guardiaspropias(update, context):
+    global cal_principal, cal_propuestas
     # reply_markup=telegram.InlineKeyboardMarkup([])
     cadena = ""
-    for e in cal_principal.calendario.events:
-        if  cal_principal.timestampmesfinal() > e.begin.datetime > cal_principal.timestampmesinicio():
-            # Aqui pediriamos el nombre del usuario a traves de REST, usando el id de Telegram como dato
-            nombre_usuario = "NOMBRE"
-            if list(e.attendees)[0].common_name == nombre_usuario:
-                # str(e.begin.format('DD-MM-YY HH:mm'))
-                # reply_markup
-                cadena = cadena + "\n" + e.name + "Asignada a " + list(e.attendees)[
-                    0].common_name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
+    lista_eventos=[]
+    try:
+        nombre_usuario=servicio_rest.GetNombrePorID(id=idtest)
+        email_usuario=servicio_rest.GetEmailPorID(id=idtest)
+        lista_eventos=cal_principal.get_eventos(email_usuario)
+        # Aqui pediriamos el nombre del usuario a traves de REST, usando el id de Telegram como dato
+        #hace falta una función de obtener la ID por la ID de Telegram
+        logging.debug("El usuario " + nombre_usuario + " ha solicitado sus propias guardias. Fecha actual " + str(datetime.date.today()))
+            # str(e.begin.format('DD-MM-YY HH:mm'))
+            # reply_markup
 
-    context.bot.send_message(chat_id=update.message.chat_id,
+        for e in lista_eventos:
+            logging.debug("Evento con el usuario incluido" + str(e))
+            cadena = cadena + "\n" + e.name + "Asignada a " + list(e.attendees)[
+                0].common_name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
+
+        context.bot.send_message(chat_id=update.message.chat_id,
                              text=cadena
                              )
+    except Exception as e:
+        logging.warning("Excepción recogiendo guardia propia" + str(e))
+        context.bot.send_message(chat_id=update.message.chat_id,
+                             text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
+                             )
+
+def callback(update, context):
+    uid_evento=update.callback_query.data
+    print("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.fromuser.id))
+    logging.debug("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.fromuser.id))
