@@ -141,12 +141,12 @@ def guardiaspropias(update, context):
 
         for e in lista_eventos:
             logging.debug("Evento con el usuario incluido" + str(e))
-            cadena = cadena + "\n" + e.name + "Asignada a " + list(e.attendees)[
-                0].common_name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
+            cadena = e.name + ". Asignada a:\n "
+            for asistente in e.attendees:
+                cadena+= " - " + asistente.common_name +"\n "
+            cadena+= " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
+            context.bot.send_message(chat_id=update.message.chat_id,text=cadena)
 
-        context.bot.send_message(chat_id=update.message.chat_id,
-                             text=cadena
-                             )
     except Exception as e:
         logging.warning("Excepción recogiendo guardia propia" + str(e))
         context.bot.send_message(chat_id=update.message.chat_id,

@@ -44,9 +44,12 @@ class calendario:
                     if(list(e.attendees) == []):
                         lista_eventos.append(e)
                 elif(attendee!=None):
-                    if attendee in list(e.attendees)[0].common_name:
-                        logging.info("Evento con el usuario incluido" + str(e))
-                        lista_eventos.append(e)
+                    if list(e.attendees)!=[]:
+                        for asistente in e.attendees:
+                            if(attendee in asistente.common_name) :
+                                logging.info("Evento con el usuario incluido Atendee " + str(asistente.common_name))
+                                lista_eventos.append(e)
+        logging.debug("Lista de eventos en get_eventos:" + str(lista_eventos))
         return lista_eventos
     def tomar_evento(self,attendee,uidevento):
         for e in self.calendario.events:
