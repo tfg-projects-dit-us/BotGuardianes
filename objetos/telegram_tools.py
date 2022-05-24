@@ -8,7 +8,7 @@ import calendar
 import arrow
 import requests
 from objetos import servicio_rest
-
+from operator import attrgetter
 
 
 token_bot=None
@@ -17,7 +17,7 @@ logger=None
 tokenbot=None
 cal_principal=None
 cal_propuestas=None
-idtest=22
+
 def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None):
     global tokenbot,bot,cal_principal,cal_propuestas
     cal_principal=cal_prim
@@ -110,19 +110,25 @@ def guardiasdisponibles(update, context):
     calendario=cal_principal
     cadena = ""
     lista_eventos=cal_principal.get_eventos()
-    for e in lista_eventos:
-        lista_botones = lista_botones + [[telegram.InlineKeyboardButton(
-                    text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm')), callback_data=e.uid)]]
+    try:
+        if lista_eventos==[]:
+            context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
+            logging.debug("No hay guardias disponibles")
+        else:
+            for e in sorted(lista_eventos,key=attrgetter('begin')):
+                lista_botones = [[telegram.InlineKeyboardButton(
+                            text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm')), callback_data=e.uid)]]
 
-        cadena = cadena + "\n" + e.name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
+                cadena = e.name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
 
-    reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
-    if cadena == "":
-        context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
-        logging.debug("No hay guardias disponibles")
-    else:
-        context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
-        logging.debug(cadena)
+                reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
+                context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
+                logging.debug(cadena)
+
+    except Exception as e:
+        logging.error(str(e))
+
+
 
 def guardiaspropias(update, context):
     global cal_principal, cal_propuestas
@@ -130,8 +136,9 @@ def guardiaspropias(update, context):
     cadena = ""
     lista_eventos=[]
     try:
-        nombre_usuario=servicio_rest.GetNombrePorID(id=idtest)
-        email_usuario=servicio_rest.GetEmailPorID(id=idtest)
+        idrest=servicio_rest.GetidRESTPorIDTel(update.message.chat_id)
+        nombre_usuario=servicio_rest.GetNombrePorID(id=idrest)
+        email_usuario=servicio_rest.GetEmailPorID(id=idrest)
         lista_eventos=cal_principal.get_eventos(email_usuario)
         # Aqui pediriamos el nombre del usuario a traves de REST, usando el id de Telegram como dato
         #hace falta una función de obtener la ID por la ID de Telegram
@@ -139,7 +146,7 @@ def guardiaspropias(update, context):
             # str(e.begin.format('DD-MM-YY HH:mm'))
             # reply_markup
 
-        for e in lista_eventos:
+        for e in sorted(lista_eventos,key=attrgetter('begin')):
             logging.debug("Evento con el usuario incluido" + str(e))
             cadena = e.name + ". Asignada a:\n "
             for asistente in e.attendees:
@@ -154,6 +161,10 @@ def guardiaspropias(update, context):
                              )
 
 def callback(update, context):
-    uid_evento=update.callback_query.data
-    print("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.fromuser.id))
-    logging.debug("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.fromuser.id))
+    try:
+        if update.callback_query.answer():
+            uid_evento=update.callback_query.data
+            print("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
+            logging.debug("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
+    except AttributeError as e:
+        logging.error("Error recogiendo nombre del evento con UID {}. Valor de callback {}".format(uid_evento,update.callback_query))

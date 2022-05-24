@@ -31,7 +31,8 @@ if __name__ == '__main__':
                     contrasena=configuracion.configfile['REST']['contrasena'],
                     inserta=configuracion.configfile['REST']['url_insertartelegramID'],
                     getID=configuracion.configfile['REST']['url_getIDporemail'],
-                    getnombre=configuracion.configfile['REST']['url_getnombreporid']
+                    getnombre=configuracion.configfile['REST']['url_getnombreporID'],
+                    getIDrest = configuracion.configfile['REST']['url_getIDtestporIDtel']
                     )
 
 
