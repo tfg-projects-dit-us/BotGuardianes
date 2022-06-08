@@ -9,6 +9,7 @@ import arrow
 import requests
 from objetos import servicio_rest
 from operator import attrgetter
+import ics
 
 
 token_bot=None
@@ -17,12 +18,12 @@ logger=None
 tokenbot=None
 cal_principal=None
 cal_propuestas=None
-
-def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None):
-    global tokenbot,bot,cal_principal,cal_propuestas
+canalid=None
+def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None,canal_id=None):
+    global tokenbot,bot,cal_principal,cal_propuestas,canalid
     cal_principal=cal_prim
     cal_propuestas=cal_prop
-
+    canalid=canal_id
     tokenbot = token_bot
     if (bottelegram is None and token_bot is not None):
         bot = telegram.Bot(token=telegram.update.tokenbot)
@@ -48,7 +49,7 @@ def registro(update, context):
     return 1
 
 def registro_paso2(update, context):
-    logging.info(update.message.text)
+    logging.debug(update.message.text)
     idusuario=False
     if ("@" in update.message.text):
 
@@ -58,40 +59,43 @@ def registro_paso2(update, context):
             logging.debug("Respuesta a GETIDPorEmail es:" + str(respuesta) + " tipo " + str(respuesta.isdigit()))
             if respuesta.isdigit():
                 idusuario = respuesta
-            elif "Could not fing a doctor with email:" in respuesta:
+            elif "Could not fing a doctor" in respuesta:
                 context.bot.send_message(chat_id=update.message.chat_id,
-                                        text="Su correo no ha sido encontrado en la plataforma.Por favor, consulte al "
+                                        text="Su correo no ha sido encontrado en la plataforma.\nPor favor, consulte al "
                                              "administrador de su sistema para comprobar que sus datos estan adecuadamente "
                                              "agregados")
+                return ConversationHandler.END
             if idusuario!= False:
-                logging.info(idusuario)
-                logging.info(update.effective_chat.id)
+                logging.debug(idusuario)
+                logging.debug(update.effective_chat.id)
                 respuesta = servicio_rest.InsertaTelegramID(idusuario=str(idusuario), chatid=update.effective_chat.id)
                 logging.debug("Valor de respuesta " + str(respuesta))
                 # Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso,
                 # enviaríamos el id
-                if respuesta.lower()=='true':
+                if respuesta=='ID de telegram actualizado':
                     context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="Ha sido registrado en la plataforma, " + servicio_rest.GetNombrePorID(idusuario))  # Imprimimos su nombre
+                                     text="Ha sido registrado en la plataforma,{}".format(servicio_rest.GetNombrePorID(idusuario)))  # Imprimimos su nombre
+                else:
+                    context.bot.send_message(chat_id=update.message.chat_id,
+                                             text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
-
-            kb = [
-                [
-                    telegram.KeyboardButton('/guardias_disponibles'),
-                    telegram.KeyboardButton('/guardias_propias')
-                ],
-                [
-                    telegram.KeyboardButton('Boton 3'),
-                    telegram.KeyboardButton('Boton 4')
+                kb = [
+                    [
+                        telegram.KeyboardButton('/guardias_disponibles'),
+                        telegram.KeyboardButton('/guardias_propias')
+                    ],
+                    [
+                        telegram.KeyboardButton('Boton 3'),
+                        telegram.KeyboardButton('Boton 4')
+                    ]
                 ]
-            ]
 
-            kb_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
+                kb_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
 
-            context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Seleccione una opcion",
-                             reply_markup=kb_markup)
-            return ConversationHandler.END
+                context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Seleccione una opcion",
+                                 reply_markup=kb_markup)
+                return ConversationHandler.END
         except Exception as e:
             context.bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error en la plataforma")
@@ -107,7 +111,6 @@ def guardiasdisponibles(update, context):
     global cal_principal,cal_propuestas
     reply_markup = []
     lista_botones = [[]]
-    calendario=cal_principal
     cadena = ""
     lista_eventos=cal_principal.get_eventos()
     try:
@@ -116,14 +119,14 @@ def guardiasdisponibles(update, context):
             logging.debug("No hay guardias disponibles")
         else:
             for e in sorted(lista_eventos,key=attrgetter('begin')):
-                lista_botones = [[telegram.InlineKeyboardButton(
-                            text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm')), callback_data=e.uid)]]
+                lista_botones = lista_botones+ [[telegram.InlineKeyboardButton(
+                            text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm')), callback_data="tomar;{}".format(e.uid))]]
 
-                cadena = e.name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
+                cadena = cadena + e.name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))+"\n"
 
-                reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
-                context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
-                logging.debug(cadena)
+            reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
+            context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
+            logging.debug(cadena)
 
     except Exception as e:
         logging.error(str(e))
@@ -146,13 +149,21 @@ def guardiaspropias(update, context):
             # str(e.begin.format('DD-MM-YY HH:mm'))
             # reply_markup
 
+
+        if lista_eventos==[]:
+            context.bot.send_message(chat_id=update.message.chat_id,text="No hay eventos asignados a usted")
         for e in sorted(lista_eventos,key=attrgetter('begin')):
             logging.debug("Evento con el usuario incluido" + str(e))
             cadena = e.name + ". Asignada a:\n "
             for asistente in e.attendees:
-                cadena+= " - " + asistente.common_name +"\n "
+                nombre=servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente.common_name))
+                cadena+= " - " +nombre +" (" +asistente.common_name +") \n "
             cadena+= " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
-            context.bot.send_message(chat_id=update.message.chat_id,text=cadena)
+            boton_callback=[[telegram.InlineKeyboardButton(
+                text="Proponer cambio de guardia", callback_data="ceder;{}".format(e.uid))]]
+            context.bot.send_message(chat_id=update.message.chat_id,text=cadena,reply_markup=telegram.InlineKeyboardMarkup(boton_callback))
+
+
 
     except Exception as e:
         logging.warning("Excepción recogiendo guardia propia" + str(e))
@@ -160,10 +171,34 @@ def guardiaspropias(update, context):
                              text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
                              )
 
+def ceder_evento(uid,attendee):
+    global cal_principal, cal_propuestas
+    try:
+        evento=cal_principal.get_evento(uid)
+        evento_cedido=cal_propuestas.ceder_evento(asistente=attendee,evento=evento,uidevento=uid)
+
+        if isinstance(evento_cedido,ics.icalendar.Event):
+            return evento_cedido
+    except Exception as e:
+        logging.error("Error cediendo evento en Telegram_Tools: " + str(e))
+        return False
 def callback(update, context):
+    global cal_principal, cal_propuestas
+
     try:
         if update.callback_query.answer():
-            uid_evento=update.callback_query.data
+            print("Callback: " + update.callback_query.data)
+            accion, uid_evento=update.callback_query.data.split(';')
+            if accion=="ceder":
+                correo=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+                cedido=ceder_evento(uid_evento,correo)
+
+                if isinstance(cedido,ics.icalendar.Event):
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento")
+                    for attendee in cedido.attendees:
+                        pass
+
+
             print("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
             logging.debug("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
     except AttributeError as e:

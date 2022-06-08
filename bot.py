@@ -1,4 +1,4 @@
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler)
+from telegram.ext import (ExtBot,Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler)
 import logging
 import telegram
 import ics
