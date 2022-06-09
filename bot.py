@@ -13,7 +13,8 @@ import argparse
 from objetos import telegram_tools
 from objetos.config import config
 from objetos import servicio_rest
-from objetos.calendario import calendario
+from objetos import calendario
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bot de telegram para gestion de guardias hospitalarias')
@@ -38,8 +39,9 @@ if __name__ == '__main__':
 
 
     logging.debug('Cargado token de API REST')
-    cal_principal=calendario(url=configuracion.configfile['calendarios']['url_definitivos'], user= configuracion.configfile['calendarios']['usuario'], password=configuracion.configfile['calendarios']['contrasena'])
-    cal_propuestas = calendario(url=str(configuracion.configfile['calendarios']['url_propuestas']), user= configuracion.configfile['calendarios']['usuario'], password=configuracion.configfile['calendarios']['contrasena'])
+    calendario.start(servicio=configuracion.configfile['calendarios']['url_servidor'],usuario=configuracion.configfile['calendarios']['usuario'],contrasena=configuracion.configfile['calendarios']['contrasena'])
+    cal_principal=calendario.Calendario(url=configuracion.configfile['calendarios']['url_definitivos'])
+    cal_propuestas = calendario.Calendario(url=str(configuracion.configfile['calendarios']['url_propuestas']))
     logging.debug('Calendarios cargados')
     Bot = telegram.Bot(token=tokenbot)
     telegram_tools.start(token_bot=tokenbot, logger=logger, bottelegram=Bot,cal_prim=cal_principal,cal_prop=cal_propuestas)

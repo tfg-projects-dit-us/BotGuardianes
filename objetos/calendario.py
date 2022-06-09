@@ -7,81 +7,95 @@ import calendar
 import ics
 import caldav
 
-class calendario:
+url_servicio=None
+cliente=None
+def start(servicio=None,usuario=None,contrasena=None):
+    global url_servicio,cliente
+    url_servicio=servicio
+    cliente=caldav.DAVClient(url=url_servicio,username=usuario,password=contrasena)
+    logging.debug("Iniciado servicio CALDAV")
+
+class Calendario:
     url = None
-    user = None
-    password = None
     tsini = None
     tsfin = None
     calendario = None
 
-    def __init__(self, url: str = None, user: str = None, password: str = None):
+    def __init__(self, url: str = None):
         self.url = url
-        self.user = user
-        self.password = password
         self.tsini = None
         self.tsfin = None
-        self.cargarCalendario(self.url, self.user, self.password)
+        self.cargarCalendario(self.url)
         self.timestampmesinicio()
         self.timestampmesfinal()
 
-    def cargarCalendario(self, url, user, password):
-        self.calendario = ics.Calendar(requests.get(url, auth=(user, password)).text)
+    def cargarCalendario(self, url):
+        self.calendario = cliente.principal().calendar(cal_id=url)
 
     def recargaCalendario(self):
-        self.calendario = ics.Calendar(requests.get(self.url, auth=(self.user, self.password)).text)
+        pass
     def actualizarCalendario(self):
         pass
     # Función para calcular el timestamp del primer día del mes
     def timestampmesinicio(self):
-        self.tsini=arrow.utcnow().to('Europe/Madrid').floor('month')
+        self.tsini=arrow.utcnow().to('Europe/Madrid').floor('month').datetime
         return self.tsini
     # Función para calcular el timestamp del último día del mes
     def timestampmesfinal(self):
-        self.tsfin = arrow.utcnow().to('Europe/Madrid').ceil('month')
+        self.tsfin = arrow.utcnow().to('Europe/Madrid').ceil('month').datetime
         return self.tsfin
     def get_eventos(self,attendee=None):
         lista_eventos=[]
-        self.recargaCalendario()
-        for e in self.calendario.events:
-            if self.timestampmesfinal() > e.begin > self.timestampmesinicio():
-                logging.debug("Evento en el periodo actual " + str(e))
-                if (attendee==None):
-                    if(list(e.attendees) == []):
-                        lista_eventos.append(e)
-                elif(attendee!=None):
-                    if list(e.attendees)!=[]:
-                        for asistente in e.attendees:
-                            if(attendee in asistente.common_name) :
-                                logging.info("Evento con el usuario incluido Atendee " + str(asistente.common_name))
+        no_pedido=False
+        sin_sitio=False
+        try:
+            eventosmes=self.calendario.date_search(start=self.tsini,end=self.tsfin,expand=True)
+            for e in eventosmes:
+                fecha=e.vobject_instance.vevent.dtstart.value
+                if self.timestampmesfinal() > datetime.datetime(fecha.year,fecha.month,fecha.day,0,0,0,0,pytz.timezone('Europe/Madrid')) > self.timestampmesinicio():
+                    logging.debug("Evento en el periodo actual " + str(e))
+                    if (attendee == None):
+                        logging.info("Se ha pedido lista de eventos libres")
+                        for asistente in e.vobject_instance.vevent.attendee:
+                            if asistente.role.value=='OPT-PARTICIPANT':
+                                logging.debug("Hay un asistente 'Optativo' en un evento. Significa que ya alguien pidió ceder el evento")
+                                no_pedido=True
+                            if asistente.role.value=='NON-PARTICIPANT':
+                                logging.debug("Hay un asistente 'No Participante' en un evento. Significa que ya alguien pidió obtener el evento que alguien cedió")
+                                sin_sitio=True
+                        if no_pedido==True and sin_sitio==False:
+                            lista_eventos.append(e)
+                    elif (attendee != None):
+                        logging.info("Se ha pedido lista de eventos de una persona")
+                        lista_asistentes=e.vobject_instance.vevent.attendee
+                        for asistente in e.vobject_instance.vevent.attendee:
+                            if (attendee in asistente.value):
+                                logging.debug("Evento con el usuario incluido Atendee " + str(asistente.common_name))
                                 lista_eventos.append(e)
-        logging.debug("Lista de eventos en get_eventos:" + str(lista_eventos))
-        return lista_eventos
+            logging.debug("Lista de eventos en get_eventos:" + str(lista_eventos))
+            return lista_eventos
+        except BaseException as e:
+            logging.error("Error cargando eventos: " + str(e))
+            print("Error cargando eventos: " + str(e))
+
+
 
     def get_evento(self,uid_evento):
         try:
-            evento=False
-            for e in self.calendario.events:
-                if e.uid == uid_evento:
-                    evento=e
-
-            return evento
+            return self.calendario.event_by_uid(uid=uid_evento)
         except Exception as e:
             logging.error("Error consiguiendo evento de calendario: " + str(e))
-            return False
+            return None
 
     def set_evento(self,evento):
-        busqueda=False
-        eventos=self.calendario.events
         try:
-            for e in self.calendario.events:
-                if e.uid==evento.uid:
-                    e=evento
-                    busqueda=True
-            if busqueda==False:
-                self.calendario.events.add(evento)
-                busqueda=True
-            return busqueda
+            evento_encontrado=self.calendario.event_by_uid(uid=evento.uid)
+            if isinstance(evento_encontrado, caldav.Event):
+                evento_encontrado=evento
+                evento_encontrado.save()
+            if isinstance(evento_encontrado, type(None)):
+                self.calendario.save(str(evento.icalendar_instance))
+            return True
         except Exception as e:
             logging.error("Error en la insercion de evento: " + str(e))
             return False
