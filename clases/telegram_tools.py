@@ -1,15 +1,14 @@
 import datetime
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
-import librerias.acciones_inicio
+import sys
 import logging
+from urllib.parse import urlparse
+
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 import telegram
-import pytz
-import calendar
-import arrow
-import requests
-from objetos import servicio_rest
-from operator import attrgetter
 import ics
+
+from clases import servicio_rest
+from operator import attrgetter
 
 
 token_bot=None
@@ -19,6 +18,7 @@ tokenbot=None
 cal_principal=None
 cal_propuestas=None
 canalid=None
+
 def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None,canal_id=None):
     global tokenbot,bot,cal_principal,cal_propuestas,canalid
     cal_principal=cal_prim
@@ -110,7 +110,7 @@ def registro_paso2(update, context):
 def guardiasdisponibles(update, context):
     global cal_principal,cal_propuestas
     reply_markup = []
-    lista_botones = [[]]
+    lista_botones = []
     cadena = ""
     lista_eventos=cal_principal.get_eventos()
     try:
@@ -118,11 +118,11 @@ def guardiasdisponibles(update, context):
             context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
             logging.debug("No hay guardias disponibles")
         else:
-            for e in sorted(lista_eventos,key=attrgetter('begin')):
+            for e in lista_eventos:
                 lista_botones = lista_botones+ [[telegram.InlineKeyboardButton(
-                            text=e.name + " - " + str(e.begin.format('DD-MM-YY HH:mm')), callback_data="tomar;{}".format(e.uid))]]
+                            text=e.get_summary() + " - " + e.get_fecha_str(), callback_data="tomar;{}".format(e.get_uid()))]]
 
-                cadena = cadena + e.name + " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))+"\n"
+                cadena = cadena + e.get_summary() + " en fecha: " + e.get_fecha_str()+"\n"
 
             reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
             context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
@@ -130,7 +130,8 @@ def guardiasdisponibles(update, context):
 
     except Exception as e:
         logging.error(str(e))
-
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
 
 def guardiaspropias(update, context):
@@ -146,21 +147,21 @@ def guardiaspropias(update, context):
         # Aqui pediriamos el nombre del usuario a traves de REST, usando el id de Telegram como dato
         #hace falta una función de obtener la ID por la ID de Telegram
         logging.debug("El usuario " + nombre_usuario + " ha solicitado sus propias guardias. Fecha actual " + str(datetime.date.today()))
-            # str(e.begin.format('DD-MM-YY HH:mm'))
-            # reply_markup
+
 
 
         if lista_eventos==[]:
             context.bot.send_message(chat_id=update.message.chat_id,text="No hay eventos asignados a usted")
-        for e in sorted(lista_eventos,key=attrgetter('begin')):
+            #key=lambda fecha: e.vobject_instance.vevent.dstart
+        for e in lista_eventos:
             logging.debug("Evento con el usuario incluido" + str(e))
-            cadena = e.name + ". Asignada a:\n "
-            for asistente in e.attendees:
-                nombre=servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente.common_name))
-                cadena+= " - " +nombre +" (" +asistente.common_name +") \n "
-            cadena+= " en fecha: " + str(e.begin.format('DD-MM-YY HH:mm'))
+            cadena = e.get_summary() + ". Asignada a:\n "
+            for asistente in e.get_asistentes():
+                nombre=servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
+                cadena+= " - " +nombre +" (" +asistente +") \n "
+            cadena+= " en fecha: " + e.get_fecha_str()
             boton_callback=[[telegram.InlineKeyboardButton(
-                text="Proponer cambio de guardia", callback_data="ceder;{}".format(e.uid))]]
+                text="Proponer cambio de guardia", callback_data="ceder;{}".format(e.get_uid()))]]
             context.bot.send_message(chat_id=update.message.chat_id,text=cadena,reply_markup=telegram.InlineKeyboardMarkup(boton_callback))
 
 
@@ -201,5 +202,6 @@ def callback(update, context):
 
             print("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
             logging.debug("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
-    except AttributeError as e:
-        logging.error("Error recogiendo nombre del evento con UID {}. Valor de callback {}".format(uid_evento,update.callback_query))
+    except BaseException as e:
+        logging.error("Error recogiendo nombre del evento con UID {}. Valor de callback {}. Función ejecutada {}".format(uid_evento,
+                                                                                                   update.callback_query, sys._getframe(1).f_code.co_name))
