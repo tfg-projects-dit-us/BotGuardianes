@@ -54,19 +54,38 @@ class Evento:
                     elif  'ROLE' in asistente.params.keys() and not 'CUTYPE' in asistente.params.keys():
                         if asistente.params['ROLE']==['null']:
                             self.asistentes.update(
-                                {str(urlparse(asistente.value).path): {"rol": "REQ-PARTICIPANT", "tipo": "INDIVIDUAL"}})
+                                {str(urlparse(asistente.value).path): {"rol": 'REQ-PARTICIPANT', "tipo": 'INDIVIDUAL'}})
                         else:
-                            self.asistentes.update({str(urlparse(asistente.value).path):{"rol":asistente.params['ROLE'][0],"tipo":"INDIVIDUAL"}})
+                            self.asistentes.update({str(urlparse(asistente.value).path):{"rol":asistente.params['ROLE'][0],"tipo":'INDIVIDUAL'}})
                     elif not 'ROLE' in asistente.params.keys() and  'CUTYPE' in asistente.params.keys():
-                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":"REQ-PARTICIPANT","tipo":asistente.params['CUTYPE']}})
+                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":'REQ-PARTICIPANT',"tipo":asistente.params['CUTYPE']}})
                     else:
-                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":"REQ-PARTICIPANT","tipo":"INDIVIDUAL"}})
+                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":'REQ-PARTICIPANT',"tipo":'INDIVIDUAL'}})
         return self.asistentes
 
-    def set_asistente(self,asistente):
-        for attendee in self.asistentes:
-            if attendee==asistente:
-                self.asistentes.update(asistente)
+    def set_asistente(self, correo_asistente, asistente):
+        try:
+            self.asistentes.update({correo_asistente:asistente})
+            if hasattr(self.Event.vobject_instance.vevent, 'attendee'):
+                for i,attendee in enumerate(self.Event.vobject_instance.vevent.contents['attendee']):
+
+                    if  str(urlparse(attendee.value).path)==correo_asistente:
+                        self.Event.vobject_instance.vevent.contents['attendee'][i].params.update({'ROLE':[asistente['rol']]})
+                        self.Event.vobject_instance.vevent.contents['attendee'][i].params.update({'CUTYPE': [asistente['tipo']]})
+            else:
+                self.Event.vobject_instance.vevent.contents['attendee'][0].behavior=None
+                self.Event.vobject_instance.vevent.contents['attendee'][0].encoded=True
+                self.Event.vobject_instance.vevent.contents['attendee'][0].group=None
+                self.Event.vobject_instance.vevent.contents['attendee'][0].isNative=False
+                self.Event.vobject_instance.vevent.contents['attendee'][0].name="ATTENDEE"
+                self.Event.vobject_instance.vevent.contents['attendee'][0].params.update({'PARTSTAT':['NEEDS-ACTION']})
+                self.Event.vobject_instance.vevent.contents['attendee'][0].params.update({'ROLE':[asistente['rol']]})
+                self.Event.vobject_instance.vevent.contents['attendee'][0].params.update({'CUTYPE': [asistente['tipo']]})
+                self.Event.vobject_instance.vevent.contents['attendee'][0].value="mailto:" + correo_asistente
+        except Exception as e:
+            logging.error("Error en set-asistentes. {}".format(e))
+
+
     def get_fecha_str(self):
         return str(self.Event.vobject_instance.vevent.dtstart.value.strftime('%d-%m-%Y %H:%M'))
     def get_fecha_datetime(self):
@@ -149,6 +168,7 @@ class Calendario:
             logging.error("Error ordenando lista: "+ str(exception))
         finally:
             return lista_ordenada
+
     def get_evento(self,uid_evento):
         try:
             return Evento(self.calendario.event_by_uid(uid=uid_evento))
@@ -158,16 +178,24 @@ class Calendario:
 
     def set_evento(self,evento):
         try:
-            evento_encontrado=self.calendario.event_by_uid(uid=evento.uid)
+            evento_encontrado=self.calendario.event_by_uid(uid=evento.get_uid())
             if isinstance(evento_encontrado, caldav.Event):
-                evento_encontrado=evento
+                evento_encontrado=evento.Event
                 evento_encontrado.save()
-            if isinstance(evento_encontrado, type(None)):
-                self.calendario.save(str(evento.Event.icalendar_instance))
+
+            return True
+        except caldav.lib.error.NotFoundError as e:
+            logging.debug("Evento {} no existente en calendario. Función ejecutada {}".format(evento.get_uid(), sys._getframe(1).f_code.co_name))
+            logging.debug("Evento a introducir {} en calendario {} con data {}".format(str(evento),str(self.calendario),evento.Event.data))
+            self.calendario.save_event(evento.Event.data)
             return True
         except Exception as e:
             logging.error("Error en la insercion de evento: " + str(e))
             return False
+
+
+
+
 
 
 
@@ -178,19 +206,25 @@ class Calendario:
             logging.debug("Tipo de evento: " + str(type(evento)))
             evento_buscado=self.get_evento(uid_evento=uidevento)
             if not isinstance(evento,Evento) and isinstance(evento_buscado,Evento):
-
-                for attendee in evento_buscado.get_asistentes():
+                asistentes=evento_buscado.get_asistentes()
+                for attendee in asistentes:
                     if attendee==asistente:
-                        attendee['rol']="OPT-PARTICIPANT"
-                        evento_buscado.set_asistente(attendee)
+                        asistentes[attendee]['rol']='OPT-PARTICIPANT'
+                        evento_buscado.set_asistente(attendee,asistentes[attendee])
 
                 evento_cedido = self.set_evento(evento_buscado)
                 if evento_cedido == True:
                     return evento_buscado
-            if isinstance(evento,caldav.objects.Event):
-                for attendee in evento.vobject_instance.vevent.contents['attendee']:
-                    if urlparse(attendee.value).path==asistente:
-                        attendee.params['ROLE'][0]="OPT-PARTICIPANT"
+
+            if isinstance(evento,Evento):
+
+                asistentes=evento.get_asistentes()
+
+                for attendee in asistentes:
+                    if attendee==asistente:
+                        asistentes[attendee]['rol']='OPT-PARTICIPANT'
+                        evento.set_asistente(attendee,asistentes[attendee])
+
                 evento_cedido = self.set_evento(evento)
 
                 if evento_cedido == True:

@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 import telegram
 import ics
-
+from clases import gestor_calendario
 from clases import servicio_rest
 from operator import attrgetter
 
@@ -119,13 +119,13 @@ def guardiasdisponibles(update, context):
             logging.debug("No hay guardias disponibles")
         else:
             for e in lista_eventos:
-                lista_botones = lista_botones+ [[telegram.InlineKeyboardButton(
+                lista_botones = [[telegram.InlineKeyboardButton(
                             text=e.get_summary() + " - " + e.get_fecha_str(), callback_data="tomar;{}".format(e.get_uid()))]]
 
-                cadena = cadena + e.get_summary() + " en fecha: " + e.get_fecha_str()+"\n"
+                cadena = e.get_summary() + " en fecha: " + e.get_fecha_str()+"\n"
 
-            reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
-            context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
+                reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
+                context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
             logging.debug(cadena)
 
     except Exception as e:
@@ -178,7 +178,7 @@ def ceder_evento(uid,attendee):
         evento=cal_principal.get_evento(uid)
         evento_cedido=cal_propuestas.ceder_evento(asistente=attendee,evento=evento,uidevento=uid)
 
-        if isinstance(evento_cedido,ics.icalendar.Event):
+        if isinstance(evento_cedido,gestor_calendario.Evento):
             return evento_cedido
     except Exception as e:
         logging.error("Error cediendo evento en Telegram_Tools: " + str(e))
@@ -194,9 +194,9 @@ def callback(update, context):
                 correo=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
                 cedido=ceder_evento(uid_evento,correo)
 
-                if isinstance(cedido,ics.icalendar.Event):
+                if isinstance(cedido,gestor_calendario.Evento):
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento")
-                    for attendee in cedido.attendees:
+                    for attendee in cedido.asistentes:
                         pass
 
 
