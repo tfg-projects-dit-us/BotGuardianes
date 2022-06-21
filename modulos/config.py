@@ -10,12 +10,10 @@ import sys
 
 class config:
     configfile = None
-    logger = None
     directorio = None
 
-    def __init__(self, logger=None, directorio=None):
+    def __init__(self, directorio=None):
         self.directorio = directorio
-        self.logger = logger
         self.cargar_configuracion_lectura()
         self.crear_log()
 
@@ -55,5 +53,4 @@ class config:
                 filemode='a', enconding='utf-8', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                 level=logging.WARNING)
 
-        self.logger = logging.getLogger()
         logging.debug(str(self.configfile))

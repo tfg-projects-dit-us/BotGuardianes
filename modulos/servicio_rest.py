@@ -9,7 +9,6 @@ url_getnombre=None
 url_getIDrestporIDtel=None
 usuario=None
 password=None
-logger=None
 def start(user=None,contrasena=None,inserta=None,getID=None,getnombre=None,getIDrest=None):
     #La palabra clave global sirve para poder modificar la variable que está fuera del ámbito de esta variable dentro del
     #módulo, no accesible fuera del módulo sin llamar al módulo en sí

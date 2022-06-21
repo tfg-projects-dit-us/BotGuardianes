@@ -10,41 +10,54 @@ import locale
 import yaml
 import os.path
 import argparse
-from clases import telegram_tools
-from clases.config import config
-from clases import servicio_rest
-from clases import gestor_calendario
+from modulos import telegram_tools
+from modulos.config import config
+from modulos import servicio_rest
+from modulos import gestor_calendario
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bot de telegram para gestion de guardias hospitalarias')
-    parser.add_argument('--config', help="Fichero de configuracion (Por defecto en config/config.yaml)", type=open)
+    parser.add_argument('--config', help="Fichero de configuracion (Por defecto en config/config.yaml)", type=str, default="config/config.yaml")
+    args=parser.parse_args()
 
-    configuracion = config(directorio="config/config.yaml")
-    logger = config.logger
+    configuracion = config(directorio=args.config)
     logging.debug('Cargado fichero de configuracion config.yaml')
-    logging.debug(config.logger)
 
     # Este es el token del bot que se ha generado con BotFather.
     logging.debug(str(config.configfile))
     tokenbot = configuracion.configfile['telegram']['token_bot']
-    servicio_rest.start(user=configuracion.configfile['REST']['usuario'],
-                    contrasena=configuracion.configfile['REST']['contrasena'],
-                    inserta=configuracion.configfile['REST']['url_insertartelegramID'],
-                    getID=configuracion.configfile['REST']['url_getIDporemail'],
-                    getnombre=configuracion.configfile['REST']['url_getnombreporID'],
-                    getIDrest = configuracion.configfile['REST']['url_getIDtestporIDtel']
-                    )
+    servicio_rest.start(
+        user=configuracion.configfile['REST']['usuario'],
+        contrasena=configuracion.configfile['REST']['contrasena'],
+        inserta=configuracion.configfile['REST']['url_insertartelegramID'],
+        getID=configuracion.configfile['REST']['url_getIDporemail'],
+        getnombre=configuracion.configfile['REST']['url_getnombreporID'],
+        getIDrest = configuracion.configfile['REST']['url_getIDtestporIDtel']
+        )
 
 
 
     logging.debug('Cargado token de API REST')
-    gestor_calendario.start(servicio=configuracion.configfile['calendarios']['url_servidor'],usuario=configuracion.configfile['calendarios']['usuario'],contrasena=configuracion.configfile['calendarios']['contrasena'])
-    cal_principal=gestor_calendario.Calendario(url=configuracion.configfile['calendarios']['url_definitivos'])
-    cal_propuestas = gestor_calendario.Calendario(url=str(configuracion.configfile['calendarios']['url_propuestas']))
+    gestor_calendario.start(
+        servicio=configuracion.configfile['calendarios']['url_servidor'],
+        usuario=configuracion.configfile['calendarios']['usuario'],
+        contrasena=configuracion.configfile['calendarios']['contrasena']
+    )
+    cal_principal=gestor_calendario.Calendario(
+        url=configuracion.configfile['calendarios']['url_definitivos']
+    )
+    cal_propuestas = gestor_calendario.Calendario(
+        url=str(configuracion.configfile['calendarios']['url_propuestas'])
+    )
     logging.debug('Calendarios cargados')
     Bot = telegram.Bot(token=tokenbot)
-    telegram_tools.start(token_bot=tokenbot, logger=logger, bottelegram=Bot,cal_prim=cal_principal,cal_prop=cal_propuestas)
+    telegram_tools.start(
+        token_bot=tokenbot,
+        bottelegram=Bot,
+        cal_prim=cal_principal,
+        cal_prop=cal_propuestas
+    )
     logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
     print("Calendarios cargados. Iniciado correctamente")
     # Función para calcular el timestamp del primer dia del mes
@@ -54,7 +67,10 @@ if __name__ == '__main__':
     # print(timestampmesinicio())
     # print(timestampmesfinal())
 
-    updater = Updater(token=tokenbot, use_context=True)
+    updater = Updater(
+        token=tokenbot,
+        use_context=True
+    )
     dispatcher = updater.dispatcher
 
     # La función registro se le asigna a la funcion start del bot. Esta se llama cuando un usuario utiliza el bot por

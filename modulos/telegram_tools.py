@@ -6,20 +6,19 @@ from urllib.parse import urlparse
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 import telegram
 import ics
-from clases import gestor_calendario
-from clases import servicio_rest
+from modulos import gestor_calendario
+from modulos import servicio_rest
 from operator import attrgetter
 
 
 token_bot=None
 bot=None
-logger=None
 tokenbot=None
 cal_principal=None
 cal_propuestas=None
 canalid=None
 
-def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=None,canal_id=None):
+def start(token_bot=None, bottelegram=None,cal_prim=None,cal_prop=None,canal_id=None):
     global tokenbot,bot,cal_principal,cal_propuestas,canalid
     cal_principal=cal_prim
     cal_propuestas=cal_prop
@@ -30,17 +29,6 @@ def start(token_bot=None, logger=None, bottelegram=None,cal_prim=None,cal_prop=N
     else:
         bot = bottelegram
 
-# Creamos una funcion de eco, que repite el mensaje que recibe
-def echo(update, context):
-    print(update.logger)
-    context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
-
-# Esta funcion recibe un mensaje y cambia sus caracteres por mayusculas
-def caps(update, context):
-    text_caps = ' '.join(context.args).upper()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)
-
-    # Esta funcion es la que inicia el bot cuando entra en contacto con un usuario
 
 def registro(update, context):
     context.bot.send_message(chat_id=update.message.chat_id,
