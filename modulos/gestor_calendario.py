@@ -50,7 +50,7 @@ class Evento:
             if hasattr(self.Event.vobject_instance.vevent,'attendee'):
                 for asistente in self.Event.vobject_instance.vevent.contents['attendee']:
                     if 'ROLE' in asistente.params.keys() and 'CUTYPE' in asistente.params.keys():
-                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":asistente.params['ROLE'][0],"tipo":asistente.params['CUTYPE']}})
+                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":asistente.params['ROLE'][0],"tipo":asistente.params['CUTYPE'][0]}})
                     elif  'ROLE' in asistente.params.keys() and not 'CUTYPE' in asistente.params.keys():
                         if asistente.params['ROLE']==['null']:
                             self.asistentes.update(
@@ -58,7 +58,7 @@ class Evento:
                         else:
                             self.asistentes.update({str(urlparse(asistente.value).path):{"rol":asistente.params['ROLE'][0],"tipo":'INDIVIDUAL'}})
                     elif not 'ROLE' in asistente.params.keys() and  'CUTYPE' in asistente.params.keys():
-                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":'REQ-PARTICIPANT',"tipo":asistente.params['CUTYPE']}})
+                        self.asistentes.update({str(urlparse(asistente.value).path):{"rol":'REQ-PARTICIPANT',"tipo":asistente.params['CUTYPE'][0]}})
                     else:
                         self.asistentes.update({str(urlparse(asistente.value).path):{"rol":'REQ-PARTICIPANT',"tipo":'INDIVIDUAL'}})
         return self.asistentes
@@ -186,18 +186,13 @@ class Calendario:
             return True
         except caldav.lib.error.NotFoundError as e:
             logging.debug("Evento {} no existente en calendario. Función ejecutada {}".format(evento.get_uid(), sys._getframe(1).f_code.co_name))
-            logging.debug("Evento a introducir {} en calendario {} con data {}".format(str(evento),str(self.calendario),evento.Event.data))
+            print(str(evento))
+            logging.debug("Evento a introducir {} en calendario {} con data {}".format(str(evento),str(self.calendario.canonical_url),str(evento.Event.data)))
             self.calendario.save_event(evento.Event.data)
             return True
         except Exception as e:
             logging.error("Error en la insercion de evento: " + str(e))
             return False
-
-
-
-
-
-
 
 
     def ceder_evento(self,asistente,uidevento,evento=None):
