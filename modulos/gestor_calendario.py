@@ -1,3 +1,22 @@
+#BotGuardianes/modulos/gestor_calendario.py
+"""
+Módulo para agregar manejo de calendarios y eventos mediante un cliente calDAV
+
+Contiene las clases:
+
+- `Evento`: Clase para envolver un evento tipo caldav.Event
+- `Calendario`: Clase para ofrecer métodos de manejo de un calendario
+
+Contiene también los atributos de módulo:
+
+- `cliente`: Variable a nivel de módulo con el objeto de manejo de cliente calDAV
+
+Y los métodos de módulo:
+
+- `start(servicio,usuario,contrasena)`: Inicio del cliente calDAV
+"""
+
+
 import datetime
 import pytz
 import sys
@@ -12,40 +31,85 @@ import ics
 import caldav
 
 
-
-url_servicio=None
 cliente=None
 def start(servicio=None,usuario=None,contrasena=None):
-    global url_servicio,cliente
-    url_servicio=servicio
+    """
+    Función de módulo para iniciar cliente caldav con URL única de donde se almacenan calendarios
+
+    Args:
+        servicio: url donde se encuentra el servidor calDAV
+        usuario: usuario para acceder al servidor calDAV
+        contrasena: contraseña para acceder a servidor calDAV
+
+    Returns:
+        None
+    """
+    global cliente
     cliente=caldav.DAVClient(url=url_servicio,username=usuario,password=contrasena)
     logging.debug("Iniciado servicio CALDAV")
 
 class Evento:
-    '''
-    Asistente es un diccionario de diccionarios.
+    """
+    Clase que envuelve a un objeto de clase caldav.Event.
+    Genera métodos que permitan operar con este objeto con más facilidad
+
+
+
+    En el objeto caldav.Event Attendee es un diccionario de diccionarios.
     La clave es el correo del asistente, y da como resultado un diccionario que contiene
-    rol y tipo de asistente
-    Los roles son:
-        - REQ-PARTICIPANT: Significa asistente obligatorio al calendario
-        - OPT-PARTICIPANT: Empleado que pretende ceder este turno
-        - NON-PARTICIPANT: Empleado que quiere tomar este turno
-    Los tipos son (Aun sin uso):
-        - INDIVIDUAL: El tipo por defecto
-        - GROUP
-        - RESOURCE
-        - ROOM
-    '''
+    rol y tipo de asistente. Los envuelve en listas, pero con esta clase vamos a convertirlo en un diccionario
+    de diccionarios
+
+
+    """
 
     def __init__(self, evento: caldav.Event):
+        """
+        Constructor de Evento.
+
+        Crea atributos:
+            - Event: caldav.Event
+            - asistentes: diccionario de asistentes {correo1,correo2,...}
+
+        Args:
+             evento: Evento tipo caldav.Event
+
+        """
         self.Event=evento
         self.asistentes={}
     def get_summary(self):
+        """
+        Obtiene nombre de evento o summary
+
+        Returns:
+             str: cadena con nombre del evento
+        """
         return str(self.Event.vobject_instance.vevent.summary.value)
     def get_uid(self):
         return str(self.Event.vobject_instance.vevent.uid.value)
 
     def get_asistentes(self):
+        """
+        Obtiene un diccionario de diccionarios, con clave el correo del usuario
+
+        Ejemplo
+        {
+        correo1: {rol: ROL_DEL_ASISTENTE,tipo: TIPO_DEL_ASISTENT}
+        correo2: {rol: ROL_DEL_ASISTENTE,tipo: TIPO_DEL_ASISTENT}
+        }
+
+        Los roles del asistente son:
+            - REQ-PARTICIPANT: Significa asistente obligatorio al calendario
+            - OPT-PARTICIPANT: Empleado que pretende ceder este turno
+            - NON-PARTICIPANT: Empleado que quiere tomar este turno
+        Los tipos del asistente son (Aun sin uso):
+            - INDIVIDUAL: El tipo por defecto
+            - GROUP
+            - RESOURCE
+            - ROOM
+        Returns:
+             diccionario{diccionarios}
+        """
         if self.asistentes =={}:
             if hasattr(self.Event.vobject_instance.vevent,'attendee'):
                 for asistente in self.Event.vobject_instance.vevent.contents['attendee']:
@@ -91,31 +155,42 @@ class Evento:
     def get_fecha_datetime(self):
         return self.Event.vobject_instance.vevent.dtstart.value
 
+
+
 class Calendario:
+    """
+    Clase para manejar un calendario con cliente calDAV
 
+    Methods:
+        get_fecha_inicio_mes(): Obtiene fecha de inicio del mes en curso
+        get_fecha_fin_mes():    Obtiene fecha de fin del mes en curso
+        cargar_calendario(url): Carga el calendario con el cliente calDAV en el atributo calendario
+        get_eventos(attendee=None):
+    """
     def __init__(self, url: str = None):
+        """
+        Constructor de Calendario
+        Args:
+            url (str): La url del calendario que cargaremos
+
+        Attributes:
+            url (str): La url del calendario
+            calendario (caldav.Calendar): Calendario conectado con cliente calDAV
+        """
         self.url = url
-        self.tsini = None
-        self.tsfin = None
-        self.cargarCalendario(self.url)
-        self.timestampmesinicio()
-        self.timestampmesfinal()
+        self.cargar_calendario(self.url)
 
-    def cargarCalendario(self, url):
+    def cargar_calendario(self, url):
         self.calendario = cliente.principal().calendar(cal_id=url)
-
-    def recargaCalendario(self):
-        pass
-    def actualizarCalendario(self):
-        pass
     # Función para calcular el timestamp del primer día del mes
-    def timestampmesinicio(self):
-        self.tsini=arrow.utcnow().to('Europe/Madrid').floor('month').datetime
-        return self.tsini
+    @staticmethod
+    def get_fecha_inicio_mes():
+        return arrow.utcnow().to('Europe/Madrid').floor('month').datetime
     # Función para calcular el timestamp del último día del mes
-    def timestampmesfinal(self):
-        self.tsfin = arrow.utcnow().to('Europe/Madrid').ceil('month').datetime
-        return self.tsfin
+    @staticmethod
+    def get_fecha_fin_mes():
+        self.fecha_final = arrow.utcnow().to('Europe/Madrid').ceil('month').datetime
+        return self.fecha_final
     def get_eventos(self,attendee=None):
         lista_eventos=[]
         lista_eventos_aux=[]
@@ -123,13 +198,13 @@ class Calendario:
         sitios_libres=0
         sin_sitio=False
         try:
-            eventosmes=self.calendario.date_search(start=self.tsini,end=self.tsfin,expand=True)
+            eventosmes=self.calendario.date_search(start=self.fecha_inicial, end=self.fecha_final, expand=True)
             for x in eventosmes:
                 lista_eventos_aux.append(Evento(x))
 
             for e in  lista_eventos_aux:
                 fecha=e.get_fecha_datetime()
-                if self.timestampmesfinal() > datetime.datetime(fecha.year,fecha.month,fecha.day,0,0,0,0,pytz.timezone('Europe/Madrid')) > self.timestampmesinicio():
+                if self.get_fecha_fin_mes() > datetime.datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0, 0, pytz.timezone('Europe/Madrid')) > self.get_fecha_inicio_mes():
                     logging.debug("Evento en el periodo actual " + str(e))
                     dic_asistentes = e.get_asistentes()
                     if (attendee == None):

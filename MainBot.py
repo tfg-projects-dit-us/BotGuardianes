@@ -64,8 +64,8 @@ if __name__ == '__main__':
 
     # print(cal_principal.events)
     # print(datetime.datetime.now())
-    # print(timestampmesinicio())
-    # print(timestampmesfinal())
+    # print(get_fecha_inicio_mes())
+    # print(get_fecha_fin_mes())
 
     updater = Updater(
         token=tokenbot,
