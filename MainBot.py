@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     logging.debug('Cargado token de API REST')
     gestor_calendario.start(
-        servicio=configuracion.configfile['calendarios']['url_servidor'],
+        url_servicio=configuracion.configfile['calendarios']['url_servidor'],
         usuario=configuracion.configfile['calendarios']['usuario'],
         contrasena=configuracion.configfile['calendarios']['contrasena']
     )

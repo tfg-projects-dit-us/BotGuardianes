@@ -1,8 +1,8 @@
-python-telegram-bot
-pyyaml
-pytz
-arrow
-ics
-requests
-caldav
+python-telegram-bot~=13.12
+pyyaml~=6.0
+pytz~=2022.1
+arrow~=0.14.7
+ics~=0.7
+requests~=2.27.1
+caldav~=0.9.1
 icalendar
