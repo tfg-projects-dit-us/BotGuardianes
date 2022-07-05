@@ -2,7 +2,7 @@ import datetime
 import sys
 import logging
 from urllib.parse import urlparse
-
+from functools import wraps
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 import telegram
 import ics
@@ -17,6 +17,44 @@ tokenbot=None
 cal_principal=None
 cal_propuestas=None
 canalid=None
+
+def autenticar(func):
+    """
+    Método para autenticar usuario al usar las funciones
+
+    Args:
+        func: Función a la que envuelve este método
+
+    """
+    @wraps(func)
+    def wrapper(*args,**kwargs):
+        id_user=args[0].message.chat_id
+        respuesta=servicio_rest.GetidRESTPorIDTel(id_user)
+        if respuesta.isdigit():
+            func(*args, **kwargs)
+        elif "Could not fing a doctor" in respuesta:
+            args[1].bot.send_message(chat_id=id_user,
+                                        text="No se encuentra identificado y registrado en la plataforma."
+                                             "Por favor, regístrese con la función /start")
+
+    return wrapper
+
+def autenticar_admin(func):
+    """
+    Método para autenticar usuario al usar las funciones
+
+    Args:
+        func: Función a la que envuelve este método
+
+    """
+    @wraps(func)
+    def wrapper(*args,**kwargs):
+        id_user=args[0].message.chat_id
+        id_rest=servicio_rest.GetidRESTPorIDTel(id_user)
+        email=servicio_rest.GetEmailPorID(id_rest)
+        servicio_rest.GetRolesPorEmail(email)
+        func(*args,**kwargs)
+    return wrapper
 
 def start(token_bot=None, bottelegram=None,cal_prim=None,cal_prop=None,canal_id=None):
     global tokenbot,bot,cal_principal,cal_propuestas,canalid
@@ -95,12 +133,13 @@ def registro_paso2(update, context):
         return 1
 
 # Esta funcion representa las guardias disponibles
+@autenticar
 def guardiasdisponibles(update, context):
     global cal_principal,cal_propuestas
     reply_markup = []
     lista_botones = []
     cadena = ""
-    lista_eventos=cal_principal.get_eventos()
+    lista_eventos=cal_propuestas.get_eventos()
     try:
         if lista_eventos==[]:
             context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")

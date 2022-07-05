@@ -30,34 +30,11 @@ import ics
 import caldav
 
 
-class Cliente_calDAV:
-    """
+cliente=None
 
-    Clase que maneja un cliente calDAV, carga calendarios y lista los calendarios abiertos
-
-    Attributes:
-
-        cliente: caldav.DAVClient
-    """
-
-    def __init__(self, url_servicio, usuario, contrasena):
-        """
-            Método constructor de objeto de cliente caldav con URL única de donde se almacenan calendarios
-            El cliente se almacena en la variable de módulo cliente
-
-            Args:
-                url_servicio: url donde se encuentra el servidor calDAV
-                usuario: usuario para acceder al servidor calDAV
-                contrasena: contraseña para acceder a servidor calDAV
-            """
-        try:
-            self.cliente = caldav.DAVClient(url=url_servicio, username=usuario, password=contrasena)
-            logging.debug("Iniciado url_servicio CALDAV")
-        except Exception as e:
-            print("")
 
 def start(url_servicio, usuario=None, contrasena=None):
-
+    global cliente
     try:
         cliente = caldav.DAVClient(url=url_servicio, username=usuario, password=contrasena)
         logging.debug("Iniciado url_servicio CALDAV")
@@ -308,11 +285,12 @@ class Calendario:
         sitios_libres = 0
         sin_sitio = False
         try:
-            eventosmes = self.calendario.date_search(start=self.fecha_inicial, end=self.fecha_final, expand=True)
+            eventosmes = self.calendario.date_search(start=self.get_fecha_inicio_mes(), end=self.get_fecha_fin_mes(), expand=True)
             for x in eventosmes:
                 lista_eventos_aux.append(Evento(x))
 
             for e in lista_eventos_aux:
+                sitios_libres=0
                 fecha = e.get_fecha_datetime()
                 if self.get_fecha_fin_mes() > datetime.datetime(fecha.year, fecha.month, fecha.day, 0, 0, 0, 0,
                                                                 pytz.timezone(

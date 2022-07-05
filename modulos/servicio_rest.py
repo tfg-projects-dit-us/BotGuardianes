@@ -7,16 +7,18 @@ url_inserta=None
 url_getID=None
 url_getnombre=None
 url_getIDrestporIDtel=None
+url_getroles=None
 usuario=None
 password=None
-def start(user=None,contrasena=None,inserta=None,getID=None,getnombre=None,getIDrest=None):
+def start(user=None,contrasena=None,inserta=None,getID=None,getnombre=None,getIDrest=None,getRol=None):
     #La palabra clave global sirve para poder modificar la variable que está fuera del ámbito de esta variable dentro del
     #módulo, no accesible fuera del módulo sin llamar al módulo en sí
-    global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel
+    global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel, url_getroles
     url_inserta=inserta
     url_getID= getID
     url_getnombre=getnombre
     url_getIDrestporIDtel=getIDrest
+    url_getroles=getRol
     usuario=user
     password=contrasena
     logging.debug("Inicializado el objeto REST con valores: " +
@@ -100,3 +102,28 @@ def GetEmailPorID(id):
         raise Exception
 
     return email
+
+def GetRolesPorEmail(mail):
+    respuesta = None
+    roles = []
+    try:
+        respuesta = requests.get(url_getroles + '/' + str(mail),
+                                 auth=HTTPBasicAuth(usuario, password)
+                                 )
+        if respuesta.status_code==200:
+            if "Nombre rol=Doctor" in respuesta.text:
+                roles.append("Doctor")
+            if "Nombre rol=Administrador" in respuesta.text:
+                roles.append("Administrador")
+            if "Nombre rol=Administrativo" in respuesta.text:
+                roles.append("Administrativo")
+        logging.debug("Respuesta de GetRolesPorEmail: " + str(roles))
+
+    except requests.exceptions.HTTPError as e:
+        logging.error("Error obteniendo roles del doctor " + str(e))
+        raise Exception
+    except Exception as e:
+        logging.error("Error obteniendo roles del doctor " + str(e))
+
+    finally:
+        return roles
