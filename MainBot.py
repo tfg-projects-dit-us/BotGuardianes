@@ -22,10 +22,10 @@ if __name__ == '__main__':
     args=parser.parse_args()
 
     configuracion = config(directorio=args.config)
-    logging.debug('Cargado fichero de configuracion config.yaml')
+    logging.getLogger( __name__ ).debug('Cargado fichero de configuracion config.yaml')
 
     # Este es el token del bot que se ha generado con BotFather.
-    logging.debug(str(config.configfile))
+    logging.getLogger( __name__ ).debug(str(config.configfile))
     tokenbot = configuracion.configfile['telegram']['token_bot']
     servicio_rest.start(
         user=configuracion.configfile['REST']['usuario'],
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
 
 
-    logging.debug('Cargado token de API REST')
+    logging.getLogger( __name__ ).debug('Cargado token de API REST')
     gestor_calendario.start(
         url_servicio=configuracion.configfile['calendarios']['url_servidor'],
         usuario=configuracion.configfile['calendarios']['usuario'],
@@ -51,15 +51,13 @@ if __name__ == '__main__':
     cal_propuestas = gestor_calendario.Calendario(
         url=str(configuracion.configfile['calendarios']['url_propuestas'])
     )
-    logging.debug('Calendarios cargados')
-    Bot = telegram.Bot(token=tokenbot)
+    logging.getLogger( __name__ ).debug('Calendarios cargados')
     telegram_tools.start(
         token_bot=tokenbot,
-        bottelegram=Bot,
         cal_prim=cal_principal,
         cal_prop=cal_propuestas
     )
-    logging.debug('Cargado token de Telegram. TokenID= ' + tokenbot)
+    logging.getLogger( __name__ ).debug('Cargado token de Telegram. TokenID= ' + tokenbot)
     print("Calendarios cargados. Iniciado correctamente")
     # Función para calcular el timestamp del primer dia del mes
 
@@ -74,10 +72,10 @@ if __name__ == '__main__':
     )
     dispatcher = updater.dispatcher
 
-    # La función registro se le asigna a la funcion start del bot. Esta se llama cuando un usuario utiliza el bot por
+    # La función registro_paso1 se le asigna a la funcion start del bot. Esta se llama cuando un usuario utiliza el bot por
     # primera vez
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', telegram_tools.registro)],
+        entry_points=[CommandHandler('start', telegram_tools.registro_paso1)],
         fallbacks=[],
         states={
             1: [MessageHandler(Filters.text, telegram_tools.registro_paso2)],
@@ -92,6 +90,6 @@ if __name__ == '__main__':
     dispatcher.add_handler(gdisp_handler)
     gdisp_handler = CommandHandler('guardias_propias', telegram_tools.guardiaspropias)
     dispatcher.add_handler(gdisp_handler)
-    callback_handler=CallbackQueryHandler(telegram_tools.callback)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_boton)
     dispatcher.add_handler(callback_handler)
     updater.start_polling()

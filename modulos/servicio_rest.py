@@ -21,7 +21,7 @@ def start(user=None,contrasena=None,inserta=None,getID=None,getnombre=None,getID
     url_getroles=getRol
     usuario=user
     password=contrasena
-    logging.debug("Inicializado el objeto REST con valores: " +
+    logging.getLogger( __name__ ).debug("Inicializado el objeto REST con valores: " +
                   " URL_INSERTA: " + url_inserta+
                   " URL_OBTENER: " + url_getID+
                   " URL_GET_NOMBRE " + url_getnombre+
@@ -40,7 +40,7 @@ def InsertaTelegramID(idusuario,chatid):
                            data =str(chatid))
 
     except requests.exceptions.HTTPError as e:
-        logging.error("Error insertando el ID de Telegram: " + str(e))
+        logging.getLogger( __name__ ).error("Error insertando el ID de Telegram: " + str(e))
         raise Exception
 
     return respuesta.text
@@ -51,10 +51,10 @@ def GetIDPorEmail(email):
                                                    usuario,
                                                    password),
                                        params={'email': email})
-        logging.debug(respuesta.text)
+        logging.getLogger( __name__ ).debug(respuesta.text)
         idrest=str(respuesta.text)
     except requests.exceptions.HTTPError as e:
-        logging.error("Error obteniendo el ID mediante email: " + str(e))
+        logging.getLogger( __name__ ).error("Error obteniendo el ID mediante email: " + str(e))
         raise Exception
     return idrest
 
@@ -65,10 +65,10 @@ def GetNombrePorID(id):
         respuesta=requests.get(url_getnombre+'/'+str(id),
                                auth=HTTPBasicAuth(usuario,password)
                                ).json()
-        logging.debug("Respuesta de NombrePorID: " +str(respuesta))
+        logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuesta))
         nombre=str(respuesta.get('firstName')) + " " + str(respuesta.get('lastNames'))
     except requests.exceptions.HTTPError as e:
-        logging.error("Error obteniendo nombre del doctor " + str(e))
+        logging.getLogger( __name__ ).error("Error obteniendo nombre del doctor " + str(e))
         raise Exception
 
     return nombre
@@ -83,7 +83,7 @@ def GetidRESTPorIDTel(id):
                                )
         idRest=str(respuesta.text)
     except requests.exceptions.HTTPError as e:
-        logging.error("Error obteniendo id del doctor. " + str(e))
+        logging.getLogger( __name__ ).error("Error obteniendo id del doctor. " + str(e))
         raise Exception
     return idRest
 
@@ -95,10 +95,10 @@ def GetEmailPorID(id):
         respuesta=requests.get(url_getnombre+'/'+str(id),
                                auth=HTTPBasicAuth(usuario,password)
                                ).json()
-        logging.debug("Respuesta de NombrePorID: " +str(respuesta))
+        logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuesta))
         email=str(respuesta.get('email'))
     except requests.exceptions.HTTPError as e:
-        logging.error("Error obteniendo email del doctor " + str(e))
+        logging.getLogger( __name__ ).error("Error obteniendo email del doctor " + str(e))
         raise Exception
 
     return email
@@ -117,13 +117,13 @@ def GetRolesPorEmail(mail):
                 roles.append("Administrador")
             if "Nombre rol=Administrativo" in respuesta.text:
                 roles.append("Administrativo")
-        logging.debug("Respuesta de GetRolesPorEmail: " + str(roles))
+        logging.getLogger( __name__ ).debug("Respuesta de GetRolesPorEmail: " + str(roles))
 
     except requests.exceptions.HTTPError as e:
-        logging.error("Error obteniendo roles del doctor " + str(e))
+        logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
         raise Exception
     except Exception as e:
-        logging.error("Error obteniendo roles del doctor " + str(e))
+        logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
 
     finally:
         return roles

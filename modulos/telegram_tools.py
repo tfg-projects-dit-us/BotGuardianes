@@ -1,3 +1,19 @@
+"""
+Módulo para agregar manejo del servicio de Telegram y aportar funcionalidad para el servicio de Guardianes
+
+Contiene las variables de módulo:
+
+- `bot`: Contiene un objeto tipo telegram.Bot
+- `tokenbot`: Contiene una cadena con el token del bot de Telegram
+- `cal_principal`: Contiene un objeto gestor_calendario.Calendario que define el calendario principal del servicio
+- `cal_propuestas`: Contiene un objeto gestor_calendario.Calendario que define el calendario de propuestas del servicio
+- `canalid`: Contiene una cadena con la id del canal de avisos de guardias del servicio
+
+Contiene las funciones:
+
+- TODO
+"""
+
 import datetime
 import sys
 import logging
@@ -11,16 +27,16 @@ from modulos import servicio_rest
 from operator import attrgetter
 
 
-token_bot=None
-bot=None
-tokenbot=None
-cal_principal=None
-cal_propuestas=None
-canalid=None
+bot:            telegram.Bot                =None
+tokenbot:       str                         =None
+cal_principal:  gestor_calendario.Calendario=None
+cal_propuestas: gestor_calendario.Calendario=None
+canalid:        str                         =None
 
 def autenticar(func):
     """
-    Método para autenticar usuario al usar las funciones
+    Método para autenticar usuario al usar las funciones. Verifica si el usuario está inscrito en el servicio REST
+    Se utiliza como un decorador
 
     Args:
         func: Función a la que envuelve este método
@@ -39,9 +55,33 @@ def autenticar(func):
 
     return wrapper
 
+
+def autenticar_retorno(func):
+    """
+    Método para autenticar usuario al usar las funciones. Verifica si el usuario está inscrito en el servicio REST
+    Se utiliza como un decorador
+
+    Args:
+        func: Función a la que envuelve este método
+
+    """
+    @wraps(func)
+    def wrapper(*args,**kwargs):
+        id_user=args[0].callback_query.from_user.id
+        respuesta=servicio_rest.GetidRESTPorIDTel(id_user)
+        if respuesta.isdigit():
+            func(*args, **kwargs)
+        elif "Could not fing a doctor" in respuesta:
+            args[1].bot.send_message(chat_id=id_user,
+                                        text="No se encuentra identificado y registrado en la plataforma."
+                                             "Por favor, regístrese con la función /start")
+
+    return wrapper
+
 def autenticar_admin(func):
     """
-    Método para autenticar usuario al usar las funciones
+    Método para autenticar usuario al usar las funciones del bot. Verifica si es un administrador.
+    Se utiliza como un decorador
 
     Args:
         func: Función a la que envuelve este método
@@ -52,37 +92,71 @@ def autenticar_admin(func):
         id_user=args[0].message.chat_id
         id_rest=servicio_rest.GetidRESTPorIDTel(id_user)
         email=servicio_rest.GetEmailPorID(id_rest)
-        servicio_rest.GetRolesPorEmail(email)
-        func(*args,**kwargs)
+        roles=servicio_rest.GetRolesPorEmail(email)
+        if "Administrador" in roles:
+            func(*args,**kwargs)
+        else:
+            args[1].bot.send_message(chat_id=id_user,
+                                     text="No tiene el rol adecuado para esta función."
+                                          "Verifique sus permisos con el administrador del sistema")
     return wrapper
 
-def start(token_bot=None, bottelegram=None,cal_prim=None,cal_prop=None,canal_id=None):
+def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None):
+    """
+    Función de inicialización del bot de Telegram
+
+    Args:
+        token_bot: Token de Telegram para autenticar el bot en el sistema de Telegram
+        cal_prim: Calendario principal que se utiliza en el servicio de guardias
+        cal_prop: Calendario de propuestas de cambio en el servicio de guardias
+        canal_id: Id para el canal de publicación de guardias.
+
+    """
     global tokenbot,bot,cal_principal,cal_propuestas,canalid
     cal_principal=cal_prim
     cal_propuestas=cal_prop
     canalid=canal_id
     tokenbot = token_bot
-    if (bottelegram is None and token_bot is not None):
-        bot = telegram.Bot(token=telegram.update.tokenbot)
-    else:
-        bot = bottelegram
+
+    bot = telegram.Bot(token=token_bot)
 
 
-def registro(update, context):
+
+def registro_paso1(update, context):
+    """
+    Primer paso para registrar ID del usuario en Telegram en el servicio REST de Guardianes.
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    Returns:
+        Devuelve estado actual del registro_paso1. Paso 1 completo
+    """
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Introduce tu correo electronico para registrarte en la plataforma",
                              reply_markup=telegram.ForceReply())
     return 1
 
 def registro_paso2(update, context):
-    logging.debug(update.message.text)
+    """
+    Segundo paso para registrar ID del usuario en Telegram en el servicio REST de Guardianes.
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    Returns:
+        Devuelve estado actual del registro_paso1. O bien vuelta a empezar este paso o fin de avance en estados
+    """
+    logging.getLogger( __name__ ).debug(update.message.text)
     idusuario=False
     if ("@" in update.message.text):
 
         try:
             # Aqui pedimos a la API Rest la ID del usuario con su email
             respuesta = servicio_rest.GetIDPorEmail(email=update.message.text)
-            logging.debug("Respuesta a GETIDPorEmail es:" + str(respuesta) + " tipo " + str(respuesta.isdigit()))
+            logging.getLogger( __name__ ).debug("Respuesta a GETIDPorEmail es:" + str(respuesta) + " tipo " + str(respuesta.isdigit()))
             if respuesta.isdigit():
                 idusuario = respuesta
             elif "Could not fing a doctor" in respuesta:
@@ -92,10 +166,10 @@ def registro_paso2(update, context):
                                              "agregados")
                 return ConversationHandler.END
             if idusuario!= False:
-                logging.debug(idusuario)
-                logging.debug(update.effective_chat.id)
+                logging.getLogger( __name__ ).debug(idusuario)
+                logging.getLogger( __name__ ).debug(update.effective_chat.id)
                 respuesta = servicio_rest.InsertaTelegramID(idusuario=str(idusuario), chatid=update.effective_chat.id)
-                logging.debug("Valor de respuesta " + str(respuesta))
+                logging.getLogger( __name__ ).debug("Valor de respuesta " + str(respuesta))
                 # Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso,
                 # enviaríamos el id
                 if respuesta=='ID de telegram actualizado':
@@ -125,16 +199,63 @@ def registro_paso2(update, context):
         except Exception as e:
             context.bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error en la plataforma")
-            logging.error("Error al hacer conexion con la API "+str(e))
+            logging.getLogger( __name__ ).error("Error al hacer conexion con la API "+str(e))
             return ConversationHandler.END
 
     else:
         update.message.reply_text("La cadena no tiene un @. Intente de nuevo enviar su correo")
         return 1
 
-# Esta funcion representa las guardias disponibles
+
+
+def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,accion:str):
+    """
+    Función para presentar datos de un evento en un chat de telegram
+
+    Args:
+        modo: Modo en el que se presenta el evento:
+
+            ···resumen: Solo muestra nombre y fecha del evento
+
+            ···completo: Muestra nombre, fecha e integrantes del evento
+
+        evento: Objeto gestor_calendario.Evento que contiene los datos del evento a representar.
+
+        id_chat: Identificador del chat donde se van a mostrar los datos del evento
+    """
+
+    if modo=="resumen":
+        boton = [[telegram.InlineKeyboardButton
+                (
+                    text="{} - {}".format(evento.get_summary(),evento.get_fecha_str()),
+                    callback_data="{};{}".format(accion,evento.get_uid())
+                )
+                ]]
+
+        cadena = "<b>{}</b> en fecha: {}\n".format(evento.get_summary(), evento.get_fecha_str())
+        reply_markup = telegram.InlineKeyboardMarkup(boton)
+        bot.send_message(chat_id=id_chat, text=cadena, reply_markup=reply_markup,parse_mode="HTML")
+    if modo=="completo":
+        cadena = "<b>{}</b>\n<i>Asignado a</i>:\n".format(evento.get_summary())
+        for asistente in evento.get_asistentes():
+            nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
+            cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre,asistente)
+        cadena += " en fecha: <b>{}</b>".format(evento.get_fecha_str())
+        boton_callback = [[telegram.InlineKeyboardButton(
+            text="Proponer cambio de guardia", callback_data="{};{}".format(accion,evento.get_uid()))]]
+        bot.send_message(chat_id=id_chat, text=cadena,
+                                 reply_markup=telegram.InlineKeyboardMarkup(boton_callback),parse_mode="HTML")
+
 @autenticar
 def guardiasdisponibles(update, context):
+    """
+    Función para obtener las guardias en las que hay al menos un puesto con propuesta de cambio.
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    """
     global cal_principal,cal_propuestas
     reply_markup = []
     lista_botones = []
@@ -143,25 +264,29 @@ def guardiasdisponibles(update, context):
     try:
         if lista_eventos==[]:
             context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
-            logging.debug("No hay guardias disponibles")
+            logging.getLogger( __name__ ).debug("No hay guardias disponibles")
         else:
             for e in lista_eventos:
-                lista_botones = [[telegram.InlineKeyboardButton(
-                            text=e.get_summary() + " - " + e.get_fecha_str(), callback_data="tomar;{}".format(e.get_uid()))]]
+                mostrar_datos_evento("resumen",evento=e,id_chat=update.message.chat_id,accion="tomar")
 
-                cadena = e.get_summary() + " en fecha: " + e.get_fecha_str()+"\n"
 
-                reply_markup = telegram.InlineKeyboardMarkup(lista_botones)
-                context.bot.send_message(chat_id=update.message.chat_id, text=cadena, reply_markup=reply_markup)
-            logging.debug(cadena)
+            logging.getLogger( __name__ ).debug(cadena)
 
     except Exception as e:
-        logging.error(str(e))
+        logging.getLogger( __name__ ).error(str(e))
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
-
+@autenticar
 def guardiaspropias(update, context):
+    """
+    Función para obtener las guardias propias del usuario actualmente establecidas.
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    """
     global cal_principal, cal_propuestas
     # reply_markup=telegram.InlineKeyboardMarkup([])
     cadena = ""
@@ -173,7 +298,7 @@ def guardiaspropias(update, context):
         lista_eventos=cal_principal.get_eventos(email_usuario)
         # Aqui pediriamos el nombre del usuario a traves de REST, usando el id de Telegram como dato
         #hace falta una función de obtener la ID por la ID de Telegram
-        logging.debug("El usuario " + nombre_usuario + " ha solicitado sus propias guardias. Fecha actual " + str(datetime.date.today()))
+        logging.getLogger( __name__ ).debug("El usuario {} ha solicitado sus propias guardias. Fecha actual {}".format(nombre_usuario,datetime.date.today()))
 
 
 
@@ -181,54 +306,76 @@ def guardiaspropias(update, context):
             context.bot.send_message(chat_id=update.message.chat_id,text="No hay eventos asignados a usted")
             #key=lambda fecha: e.vobject_instance.vevent.dstart
         for e in lista_eventos:
-            logging.debug("Evento con el usuario incluido" + str(e))
-            cadena = e.get_summary() + ". Asignada a:\n "
-            for asistente in e.get_asistentes():
-                nombre=servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
-                cadena+= " - " +nombre +" (" +asistente +") \n "
-            cadena+= " en fecha: " + e.get_fecha_str()
-            boton_callback=[[telegram.InlineKeyboardButton(
-                text="Proponer cambio de guardia", callback_data="ceder;{}".format(e.get_uid()))]]
-            context.bot.send_message(chat_id=update.message.chat_id,text=cadena,reply_markup=telegram.InlineKeyboardMarkup(boton_callback))
+            logging.getLogger( __name__ ).debug("Evento con el usuario incluido: {}".format(e))
+            mostrar_datos_evento("completo",evento=e,id_chat=update.message.chat_id,accion="ceder")
 
 
 
     except Exception as e:
-        logging.warning("Excepción recogiendo guardia propia" + str(e))
+        logging.getLogger( __name__ ).warning("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         context.bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
                              )
 
 def ceder_evento(uid,attendee):
-    global cal_principal, cal_propuestas
+    """
+    Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
+
+    Args:
+        uid: Identificador único de un evento, que se utilizará para buscar el evento en el calendario
+        attendee: Correo del usuario que va a ceder su puesto en una guardia
+
+    Returns:
+        Devuelve un Evento si es de clase Evento. En caso de haber excepción devuelve None
+    """
     try:
         evento=cal_principal.get_evento(uid)
-        evento_cedido=cal_propuestas.ceder_evento(asistente=attendee,evento=evento,uidevento=uid)
+        evento_cedido=cal_propuestas.ceder_evento(correo_usuario=attendee,evento=evento,uidevento=uid)
 
         if isinstance(evento_cedido,gestor_calendario.Evento):
             return evento_cedido
     except Exception as e:
-        logging.error("Error cediendo evento en Telegram_Tools: " + str(e))
-        return False
-def callback(update, context):
-    global cal_principal, cal_propuestas
+        logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
+        return None
+
+@autenticar_retorno
+def retorno_boton(update, context):
+    """
+    Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
+    Toma una acción a realizar con un evento y su uid
+
+    Si la acción es ceder, cambia el rol del usuario a OPT-PARTICIPANT para designar un hueco libre en el calendario de propuestas
+
+    Si la acción es tomar, añade al usuario con el rol NON-PARTICIPANT al evento en el calendario de propuestas
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    """
+    global cal_principal, cal_propuestas,bot
 
     try:
         if update.callback_query.answer():
-            print("Callback: " + update.callback_query.data)
+            logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
             accion, uid_evento=update.callback_query.data.split(';')
+
             if accion=="ceder":
                 correo=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
                 cedido=ceder_evento(uid_evento,correo)
 
                 if isinstance(cedido,gestor_calendario.Evento):
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento")
+                    mostrar_datos_evento("resumen",cedido,canalid,"tomar")
+
                     for attendee in cedido.asistentes:
                         pass
+            if accion=="tomar":
+                pass
 
 
-            print("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
-            logging.debug("UID del evento es:" + str(uid_evento) + " por el usuario " + str(update.callback_query.from_user.id))
+            logging.getLogger( __name__ ).debug("UID del evento es:{} por el usuario {}".
+                                                format(uid_evento,update.callback_query.from_user.id))
     except BaseException as e:
-        logging.error("Error recogiendo nombre del evento con UID {}. Valor de callback {}. Función ejecutada {}".format(uid_evento,
-                                                                                                   update.callback_query, sys._getframe(1).f_code.co_name))
+        logging.getLogger( __name__ ).error("Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
+                                            format(sys._getframe(1).f_code.co_name,uid_evento,update.callback_query,e ))
