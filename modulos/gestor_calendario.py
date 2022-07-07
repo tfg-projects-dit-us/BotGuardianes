@@ -17,6 +17,8 @@ Y los métodos de módulo:
 
 import datetime
 import typing
+
+import icalendar
 import pytz
 import sys
 from urllib.parse import urlparse
@@ -150,7 +152,7 @@ class Evento:
                             {str(urlparse(asistente.value).path): {"rol": 'REQ-PARTICIPANT', "tipo": 'INDIVIDUAL'}})
         return self.asistentes
 
-    def set_asistente(self, correo_asistente, rol="",tipo=""):
+    def set_asistente(self, correo_asistente, rol="",tipo='INDIVIDUAL'):
         """
         Actualiza lista de asistentes en el evento caldav.Event y el propio diccionario de gestor_calendario.Evento
 
@@ -162,34 +164,47 @@ class Evento:
         """
         try:
             asistente=self.asistentes[correo_asistente]
-            if rol!="":
-                asistente['rol']=rol
-            if tipo!="":
-                asistente['tipo']=tipo
-            self.asistentes.update({correo_asistente: asistente})
-            if hasattr(self.Event.vobject_instance.vevent, 'attendee'):
-                for i, attendee in enumerate(self.Event.vobject_instance.vevent.contents['attendee']):
 
-                    if str(urlparse(attendee.value).path) == correo_asistente:
-                        self.Event.vobject_instance.vevent.contents['attendee'][i].params.update(
-                            {'ROLE': [asistente['rol']]})
-                        self.Event.vobject_instance.vevent.contents['attendee'][i].params.update(
-                            {'CUTYPE': [asistente['tipo']]})
-            else:
-                self.Event.vobject_instance.vevent.contents['attendee'][0].behavior = None
-                self.Event.vobject_instance.vevent.contents['attendee'][0].encoded = True
-                self.Event.vobject_instance.vevent.contents['attendee'][0].group = None
-                self.Event.vobject_instance.vevent.contents['attendee'][0].isNative = False
-                self.Event.vobject_instance.vevent.contents['attendee'][0].name = "ATTENDEE"
-                self.Event.vobject_instance.vevent.contents['attendee'][0].params.update({'PARTSTAT': ['NEEDS-ACTION']})
-                self.Event.vobject_instance.vevent.contents['attendee'][0].params.update({'ROLE': [asistente['rol']]})
-                self.Event.vobject_instance.vevent.contents['attendee'][0].params.update(
-                    {'CUTYPE': [asistente['tipo']]})
-                self.Event.vobject_instance.vevent.contents['attendee'][0].value = "mailto:" + correo_asistente
-            return 0
+        except KeyError as k:
+            self.asistentes[correo_asistente]={}
+
         except Exception as e:
             logging.getLogger( __name__ ).error("Error en set-asistentes. {}".format(e))
             return -1
+
+        finally:
+            if rol != "":
+                self.asistentes[correo_asistente]['rol'] = rol
+
+            self.asistentes[correo_asistente]['tipo'] = tipo
+
+            if hasattr(self.Event.vobject_instance.vevent, 'attendee'):
+                existente = False
+                for i, attendee in enumerate(self.Event.vobject_instance.vevent.attendee_list):
+
+                    if str(urlparse(attendee.value).path) == correo_asistente:
+
+                        self.Event.vobject_instance.vevent.attendee_list[i].params.update(
+                            {'ROLE': [asistente['rol']]})
+                        self.Event.vobject_instance.vevent.attendee_list[i].params.update(
+                            {'CUTYPE': [asistente['tipo']]})
+                        existente = True
+                if not existente:
+                    try:
+                        self.Event.vobject_instance.vevent.add(
+                            'attendee;cutype={};role={};partstat=NEEDS-ACTION;SCHEDULE-STATUS=3.7'
+                            .format(tipo,rol)
+                        ).value="mailto:{}".format(correo_asistente)
+                    except Exception as e:
+                        logging.getLogger(__name__).error("Error agregando asistente nuevo. {}".format(e))
+                        return -1
+
+            else:
+                self.Event.vobject_instance.vevent.add(
+                    'attendee;cutype={};role={};partstat=NEEDS-ACTION;SCHEDULE-STATUS=3.7'
+                            .format(tipo,rol)
+                ).value="mailto:{}".format(correo_asistente)
+            return 0
 
     def get_fecha_str(self):
         """
@@ -234,7 +249,7 @@ class Evento:
 
         return sitios_libres
 
-    def get_comprobar_asistente(self,attendee:str):
+    def get_comprobar_asistente(self,attendee:str,rol=""):
         """
         Comprueba si un asistente está en un evento
 
@@ -245,7 +260,11 @@ class Evento:
         for asistente in self.asistentes:
             if (attendee in asistente):
                 logging.getLogger(__name__).debug("Evento con el usuario incluido Atendee {}".format(str(asistente)))
-                resultado=True
+                if rol=="":
+                    resultado=True
+                elif self.asistentes[asistente]['rol']==rol:
+                    resultado=True
+
 
         return resultado
 
@@ -445,7 +464,7 @@ class Calendario:
 
             if isinstance(evento, Evento):
 
-                if evento_buscado.get_comprobar_asistente(correo_usuario):
+                if evento.get_comprobar_asistente(correo_usuario):
                     evento.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
 
                 evento_cedido = self.set_evento(evento)
@@ -457,7 +476,26 @@ class Calendario:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return None
 
-    def tomar_evento(self, attendee, uidevento):
-        for e in self.calendario.events:
-            if e.uid == uidevento:
-                pass
+    def tomar_evento(self, correo_usuario:str , uid_evento:str):
+        """
+        Busca un evento en el calendario y añade el correo_usuario con el rol NON-PARTICIPANT
+
+        Args:
+            correo_usuario: Correo del usuario que tomará la plaza libre del evento
+            uidevento: Identificador único del evento
+
+        Returns:
+            Evento: Evento que se ha podido guardar en el calendario o None en caso de Excepción.
+        """
+        try:
+            evento_buscado = self.get_evento(uid_evento=uid_evento)
+            if isinstance(evento_buscado, Evento):
+                if not evento_buscado.get_comprobar_asistente(correo_usuario,rol="NON-PARTICIPANT"):
+                    evento_buscado.set_asistente(correo_usuario, rol="NON-PARTICIPANT")
+                    evento_tomado = self.set_evento(evento_buscado)
+                    if evento_tomado == True:
+                        return evento_buscado
+
+        except Exception as e:
+            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
+            return None

@@ -67,7 +67,7 @@ def autenticar_retorno(func):
     """
     @wraps(func)
     def wrapper(*args,**kwargs):
-        id_user=args[0].callback_query.from_user.id
+        id_user=str(args[0].callback_query.from_user.id)
         respuesta=servicio_rest.GetidRESTPorIDTel(id_user)
         if respuesta.isdigit():
             func(*args, **kwargs)
@@ -206,9 +206,25 @@ def registro_paso2(update, context):
         update.message.reply_text("La cadena no tiene un @. Intente de nuevo enviar su correo")
         return 1
 
+def botones(update, context):
+    kb = [
+        [
+            telegram.KeyboardButton('/guardias_disponibles'),
+            telegram.KeyboardButton('/guardias_propias')
+        ],
+        [
+            telegram.KeyboardButton('Boton 3'),
+            telegram.KeyboardButton('Boton 4')
+        ]
+    ]
 
+    kb_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
 
-def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,accion:str):
+    context.bot.send_message(chat_id=update.message.chat_id,
+                             text="Seleccione una opcion",
+                             reply_markup=kb_markup)
+
+def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,accion:str="nada"):
     """
     Función para presentar datos de un evento en un chat de telegram
 
@@ -222,10 +238,12 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         evento: Objeto gestor_calendario.Evento que contiene los datos del evento a representar.
 
         id_chat: Identificador del chat donde se van a mostrar los datos del evento
+        accion: Accion que se pone en el mensaje de retorno cuando se pulsa un botón de un mensaje con un evento.
+                Si la acción es nada, no se pone un botón
     """
-
+    reply_markup=[]
     if modo=="resumen":
-        boton = [[telegram.InlineKeyboardButton
+        boton_callback = [[telegram.InlineKeyboardButton
                 (
                     text="{} - {}".format(evento.get_summary(),evento.get_fecha_str()),
                     callback_data="{};{}".format(accion,evento.get_uid())
@@ -233,8 +251,12 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
                 ]]
 
         cadena = "<b>{}</b> en fecha: {}\n".format(evento.get_summary(), evento.get_fecha_str())
-        reply_markup = telegram.InlineKeyboardMarkup(boton)
-        bot.send_message(chat_id=id_chat, text=cadena, reply_markup=reply_markup,parse_mode="HTML")
+        if accion!="nada":
+            reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
+            bot.send_message(chat_id=id_chat, text=cadena, reply_markup=reply_markup,parse_mode="HTML")
+        else:
+            cadena = "Evento en el que se ha inscrito a la espera de aprobación\n\n" + cadena
+            bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
     if modo=="completo":
         cadena = "<b>{}</b>\n<i>Asignado a</i>:\n".format(evento.get_summary())
         for asistente in evento.get_asistentes():
@@ -243,9 +265,14 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         cadena += " en fecha: <b>{}</b>".format(evento.get_fecha_str())
         boton_callback = [[telegram.InlineKeyboardButton(
             text="Proponer cambio de guardia", callback_data="{};{}".format(accion,evento.get_uid()))]]
-        bot.send_message(chat_id=id_chat, text=cadena,
-                                 reply_markup=telegram.InlineKeyboardMarkup(boton_callback),parse_mode="HTML")
+        if accion != "nada":
+            reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
 
+            bot.send_message(chat_id=id_chat, text=cadena,
+                                 reply_markup=reply_markup,parse_mode="HTML")
+        else:
+            cadena = "Evento en el que se ha inscrito a la espera de aprobación\n\n" + cadena
+            bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
 @autenticar
 def guardiasdisponibles(update, context):
     """
@@ -330,13 +357,59 @@ def ceder_evento(uid,attendee):
     """
     try:
         evento=cal_principal.get_evento(uid)
-        evento_cedido=cal_propuestas.ceder_evento(correo_usuario=attendee,evento=evento,uidevento=uid)
+        evento_cedido=cal_propuestas.ceder_evento(correo_usuario=attendee,evento=evento,uid_evento=uid)
 
         if isinstance(evento_cedido,gestor_calendario.Evento):
             return evento_cedido
     except Exception as e:
         logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return None
+
+def tomar_evento(uid,attendee):
+    """
+    Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
+
+    Args:
+        uid: Identificador único de un evento, que se utilizará para buscar el evento en el calendario
+        attendee: Correo del usuario que va a ceder su puesto en una guardia
+
+    Returns:
+        Devuelve un Evento si es de clase Evento. En caso de haber excepción devuelve None
+    """
+    try:
+        evento=cal_propuestas.get_evento(uid)
+        if isinstance(evento,gestor_calendario.Evento):
+            evento_tomado=cal_propuestas.tomar_evento(correo_usuario=attendee,uid_evento=uid)
+
+            if evento_tomado:
+                return evento_tomado
+            else:
+                return None
+        else:
+            return None
+    except Exception as e:
+        logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
+        return None
+
+def borrar_mensaje(id_chat,id_mensaje):
+    """
+    Función para borrar un mensaje cuando se ha cursado la petición de tomar un evento
+
+    Args:
+        id_chat: Id del chat de donde se hace la acción de tomar evento
+        id_mensaje: ID del mensaje a borrar
+
+    Returns:
+        Verdadero si pudo completarlo, falso si no
+    """
+    terminado=False
+    try:
+        terminado=bot.deleteMessage(chat_id=id_chat,message_id=id_mensaje)
+        return terminado
+    except Exception as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+        return terminado
 
 @autenticar_retorno
 def retorno_boton(update, context):
@@ -353,7 +426,8 @@ def retorno_boton(update, context):
         context: Objeto con funciones de contexto del bot de telegram
 
     """
-    global cal_principal, cal_propuestas,bot
+    global cal_principal, cal_propuestas,bot,canalid
+
 
     try:
         if update.callback_query.answer():
@@ -371,7 +445,16 @@ def retorno_boton(update, context):
                     for attendee in cedido.asistentes:
                         pass
             if accion=="tomar":
-                pass
+                correo = servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+                tomado=tomar_evento(uid_evento,correo)
+
+
+                if isinstance(tomado,gestor_calendario.Evento):
+                    mostrar_datos_evento("completo", tomado, update.callback_query.from_user.id, "nada")
+                    borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=update.callback_query.message.message_id)
+                else:
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Ha habido un problema a la hora de inscribirse en el evento."
+                                                                                             "Póngase en contacto con un administrador")
 
 
             logging.getLogger( __name__ ).debug("UID del evento es:{} por el usuario {}".
