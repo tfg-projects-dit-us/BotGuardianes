@@ -82,6 +82,7 @@ def GetidRESTPorIDTel(id):
                                params={'idTel':str(id)}
                                )
         idRest=str(respuesta.text)
+        logging.getLogger( __name__ ).debug("Respuesta de idRESTPorIDTel: " +str(respuesta.text))
     except requests.exceptions.HTTPError as e:
         logging.getLogger( __name__ ).error("Error obteniendo id del doctor. " + str(e))
         raise Exception

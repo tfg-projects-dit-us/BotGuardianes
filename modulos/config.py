@@ -9,10 +9,22 @@ import sys
 
 
 class config:
-    configfile = None
-    directorio = None
+    """
+    Clase para empaquetar la configuración del bot de telegram
+
+    Attributes:
+        configfile: Diccionario conteniendo la configuración en un fichero yaml
+        directorio: Ruta donde se encuentra el fichero de configuración. Por defecto en ./config/config.yaml
+    """
+
 
     def __init__(self, directorio=None):
+        """
+        Método inicializador
+        Args:
+            directorio:
+        """
+        self.configfile=None
         self.directorio = directorio
         self.cargar_configuracion_lectura()
         self.crear_log()

@@ -258,7 +258,7 @@ class Evento:
         """
         resultado=False
         for asistente in self.asistentes:
-            if (attendee in asistente):
+            if (attendee == asistente):
                 logging.getLogger(__name__).debug("Evento con el usuario incluido Atendee {}".format(str(asistente)))
                 if rol=="":
                     resultado=True
@@ -302,6 +302,7 @@ class Calendario:
             nombre(str): nombre del calendario perteneciente al usuario de calDAV
 
         """
+        global cliente
         self.calendario = cliente.principal().calendar(cal_id=nombre)
 
     @staticmethod
@@ -490,7 +491,7 @@ class Calendario:
         try:
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
-                if not evento_buscado.get_comprobar_asistente(correo_usuario,rol="NON-PARTICIPANT"):
+                if not evento_buscado.get_comprobar_asistente(correo_usuario,rol="NON-PARTICIPANT") and evento_buscado.get_sitios_libres() > 0:
                     evento_buscado.set_asistente(correo_usuario, rol="NON-PARTICIPANT")
                     evento_tomado = self.set_evento(evento_buscado)
                     if evento_tomado == True:

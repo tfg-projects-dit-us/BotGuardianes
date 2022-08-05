@@ -1,5 +1,6 @@
 from telegram.ext import (ExtBot,Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler)
 import logging
+import sys
 import telegram
 import ics
 import datetime
@@ -17,6 +18,7 @@ from modulos import gestor_calendario
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description='Bot de telegram para gestion de guardias hospitalarias')
     parser.add_argument('--config', help="Fichero de configuracion (Por defecto en config/config.yaml)", type=str, default="config/config.yaml")
     args=parser.parse_args()
@@ -25,7 +27,7 @@ if __name__ == '__main__':
     logging.getLogger( __name__ ).debug('Cargado fichero de configuracion config.yaml')
 
     # Este es el token del bot que se ha generado con BotFather.
-    logging.getLogger( __name__ ).debug(str(config.configfile))
+    logging.getLogger( __name__ ).debug(str(configuracion.configfile))
     tokenbot = configuracion.configfile['telegram']['token_bot']
     servicio_rest.start(
         user=configuracion.configfile['REST']['usuario'],
@@ -84,7 +86,7 @@ if __name__ == '__main__':
     )
     dispatcher.add_handler(conv_handler)
 
-    botones_handler = CommandHandler('botones', telegram_tools.guardiasdisponibles)
+    botones_handler = CommandHandler('botones', telegram_tools.botones)
     # Añadimos función de guardias disponibles
     gdisp_handler = CommandHandler('guardias_disponibles', telegram_tools.guardiasdisponibles)
     dispatcher.add_handler(botones_handler)
@@ -94,3 +96,5 @@ if __name__ == '__main__':
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_boton)
     dispatcher.add_handler(callback_handler)
     updater.start_polling()
+
+

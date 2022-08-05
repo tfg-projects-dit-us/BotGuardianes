@@ -17,11 +17,13 @@ Contiene las funciones:
 import datetime
 import sys
 import logging
+import sqlite3
 from urllib.parse import urlparse
 from functools import wraps
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 import telegram
 import ics
+
 from modulos import gestor_calendario
 from modulos import servicio_rest
 from operator import attrgetter
@@ -58,7 +60,7 @@ def autenticar(func):
 
 def autenticar_retorno(func):
     """
-    Método para autenticar usuario al usar las funciones. Verifica si el usuario está inscrito en el servicio REST
+    Método para autenticar usuario al usar el retorno. Verifica si el usuario está inscrito en el servicio REST
     Se utiliza como un decorador
 
     Args:
@@ -117,7 +119,6 @@ def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None):
     cal_propuestas=cal_prop
     canalid=canal_id
     tokenbot = token_bot
-
     bot = telegram.Bot(token=token_bot)
 
 
@@ -242,6 +243,7 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
                 Si la acción es nada, no se pone un botón
     """
     reply_markup=[]
+    mensaje=None
     if modo=="resumen":
         boton_callback = [[telegram.InlineKeyboardButton
                 (
@@ -253,10 +255,10 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         cadena = "<b>{}</b> en fecha: {}\n".format(evento.get_summary(), evento.get_fecha_str())
         if accion!="nada":
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
-            bot.send_message(chat_id=id_chat, text=cadena, reply_markup=reply_markup,parse_mode="HTML")
+            mensaje=bot.send_message(chat_id=id_chat, text=cadena, reply_markup=reply_markup,parse_mode="HTML")
         else:
             cadena = "Evento en el que se ha inscrito a la espera de aprobación\n\n" + cadena
-            bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
+            mensaje=bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
     if modo=="completo":
         cadena = "<b>{}</b>\n<i>Asignado a</i>:\n".format(evento.get_summary())
         for asistente in evento.get_asistentes():
@@ -268,11 +270,12 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         if accion != "nada":
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
 
-            bot.send_message(chat_id=id_chat, text=cadena,
+            mensaje=bot.send_message(chat_id=id_chat, text=cadena,
                                  reply_markup=reply_markup,parse_mode="HTML")
         else:
             cadena = "Evento en el que se ha inscrito a la espera de aprobación\n\n" + cadena
-            bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
+            mensaje=bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
+    return mensaje.message_id
 @autenticar
 def guardiasdisponibles(update, context):
     """
@@ -343,7 +346,9 @@ def guardiaspropias(update, context):
         context.bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
                              )
-
+@autenticar
+def guardias_pendientes_aprobacion(update, context):
+    pass
 def ceder_evento(uid,attendee):
     """
     Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
@@ -427,7 +432,8 @@ def retorno_boton(update, context):
 
     """
     global cal_principal, cal_propuestas,bot,canalid
-
+    relacion=sqlite3.connect('./relacionesids')
+    cursor=relacion.cursor()
 
     try:
         if update.callback_query.answer():
@@ -440,8 +446,10 @@ def retorno_boton(update, context):
 
                 if isinstance(cedido,gestor_calendario.Evento):
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento")
-                    mostrar_datos_evento("resumen",cedido,canalid,"tomar")
-
+                    idmensaje=mostrar_datos_evento("resumen",cedido,canalid,"tomar")
+                    cursor.execute(f"""INSERT OR REPLACE INTO  relaciones_id  (Idevento,Idmessage)
+                                   VALUES ( COALESCE((SELECT Idevento FROM relaciones_id WHERE Idevento="{cedido.get_uid()}"),"{cedido.get_uid()}"),"{idmensaje}");""")
+                    relacion.commit()
                     for attendee in cedido.asistentes:
                         pass
             if accion=="tomar":
@@ -451,7 +459,19 @@ def retorno_boton(update, context):
 
                 if isinstance(tomado,gestor_calendario.Evento):
                     mostrar_datos_evento("completo", tomado, update.callback_query.from_user.id, "nada")
-                    borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=update.callback_query.message.message_id)
+                    if update.callback_query.message.chat_id!=canalid:
+                        borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=update.callback_query.message.message_id)
+                        cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;",(tomado.get_uid()),)
+                        idmensaje=cursor.fetchall()
+                        borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=idmensaje)
+                        cursor.execute("DELETE FROM relaciones_id where Idevento=?;",(tomado.get_uid()),)
+                        relacion.commit()
+                    else:
+                        borrar_mensaje(id_chat=update.callback_query.message.chat_id,
+                                       id_mensaje=update.callback_query.message.message_id)
+                        cursor.execute("DELETE FROM relaciones_id where Idevento=?;",(tomado.get_uid(),))
+                        relacion.commit()
+
                 else:
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Ha habido un problema a la hora de inscribirse en el evento."
                                                                                              "Póngase en contacto con un administrador")
@@ -459,6 +479,12 @@ def retorno_boton(update, context):
 
             logging.getLogger( __name__ ).debug("UID del evento es:{} por el usuario {}".
                                                 format(uid_evento,update.callback_query.from_user.id))
+        cursor.close()
+        relacion.close()
     except BaseException as e:
         logging.getLogger( __name__ ).error("Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
                                             format(sys._getframe(1).f_code.co_name,uid_evento,update.callback_query,e ))
+
+
+        cursor.close()
+        relacion.close()
