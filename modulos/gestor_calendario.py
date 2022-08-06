@@ -205,6 +205,30 @@ class Evento:
                             .format(tipo,rol)
                 ).value="mailto:{}".format(correo_asistente)
             return 0
+    def get_asistente_rol(self,asistente:str):
+        return self.asistentes[asistente]['rol']
+    def get_cuenta_asistentes(self):
+        cuenta=0
+        self.get_asistentes()
+        for asistente in self.asistentes:
+            if self.asistentes[asistente]['rol']=="REQ-PARTICIPANT":
+                cuenta+=1
+        return cuenta
+    def get_cuenta_ofertantes(self):
+        cuenta=0
+        self.get_asistentes()
+        for asistente in self.asistentes:
+            if self.asistentes[asistente]['rol']=="OPT-PARTICIPANT":
+                cuenta+=1
+        return cuenta
+
+    def get_cuenta_demandantes(self):
+        cuenta=0
+        self.get_asistentes()
+        for asistente in self.asistentes:
+            if self.asistentes[asistente]['rol']=="NON-PARTICIPANT":
+                cuenta+=1
+        return cuenta
 
     def get_fecha_str(self):
         """
@@ -455,7 +479,7 @@ class Calendario:
         try:
             logging.getLogger( __name__ ).debug("Tipo de evento: " + str(type(evento)))
             evento_buscado = self.get_evento(uid_evento=uid_evento)
-            if not isinstance(evento, Evento) and isinstance(evento_buscado, Evento):
+            if isinstance(evento_buscado, Evento):
                 if evento_buscado.get_comprobar_asistente(correo_usuario):
                     evento_buscado.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
 
@@ -463,7 +487,7 @@ class Calendario:
                 if evento_cedido == True:
                     return evento_buscado
 
-            if isinstance(evento, Evento):
+            if isinstance(evento, Evento) and not isinstance(evento_buscado, Evento) :
 
                 if evento.get_comprobar_asistente(correo_usuario):
                     evento.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
@@ -491,12 +515,11 @@ class Calendario:
         try:
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
-                if not evento_buscado.get_comprobar_asistente(correo_usuario,rol="NON-PARTICIPANT") and evento_buscado.get_sitios_libres() > 0:
+                if evento_buscado.get_comprobar_asistente(correo_usuario,rol="NON-PARTICIPANT") or evento_buscado.get_sitios_libres() > 0:
                     evento_buscado.set_asistente(correo_usuario, rol="NON-PARTICIPANT")
                     evento_tomado = self.set_evento(evento_buscado)
                     if evento_tomado == True:
                         return evento_buscado
-
         except Exception as e:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return None

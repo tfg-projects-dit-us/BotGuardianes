@@ -35,7 +35,7 @@ if __name__ == '__main__':
         inserta=configuracion.configfile['REST']['url_insertartelegramID'],
         getID=configuracion.configfile['REST']['url_getIDporemail'],
         getnombre=configuracion.configfile['REST']['url_getnombreporID'],
-        getIDrest = configuracion.configfile['REST']['url_getIDtestporIDtel'],
+        getIDrest = configuracion.configfile['REST']['url_getIDrestporIDtel'],
         getRol=configuracion.configfile['REST']['url_getrol']
         )
 
@@ -93,7 +93,13 @@ if __name__ == '__main__':
     dispatcher.add_handler(gdisp_handler)
     gdisp_handler = CommandHandler('guardias_propias', telegram_tools.guardiaspropias)
     dispatcher.add_handler(gdisp_handler)
-    callback_handler=CallbackQueryHandler(telegram_tools.retorno_boton)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_ceder,pattern="ceder")
+    dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_tomar,pattern="tomar")
+    dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_aceptar,pattern="aceptar")
+    dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_denegar,pattern="denegar")
     dispatcher.add_handler(callback_handler)
     updater.start_polling()
 
