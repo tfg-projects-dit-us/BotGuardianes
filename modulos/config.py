@@ -40,7 +40,7 @@ class config:
                     self.configfile = yaml.safe_load(configuracion)
 
         except Exception as e:
-            logging.getLogger( __name__ ).error("Error durante la carga de configuracion: " + str(e))
+            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return self.configfile
 
     def crear_log(self, config=None):

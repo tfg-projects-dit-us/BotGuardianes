@@ -1,5 +1,6 @@
 import requests
 import logging
+import sys
 from requests.auth import HTTPBasicAuth
 
 
@@ -40,7 +41,8 @@ def InsertaTelegramID(idusuario,chatid):
                            data =str(chatid))
 
     except requests.exceptions.HTTPError as e:
-        logging.getLogger( __name__ ).error("Error insertando el ID de Telegram: " + str(e))
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
 
     return respuesta.text
@@ -54,7 +56,8 @@ def GetIDPorEmail(email):
         logging.getLogger( __name__ ).debug(respuesta.text)
         idrest=str(respuesta.text)
     except requests.exceptions.HTTPError as e:
-        logging.getLogger( __name__ ).error("Error obteniendo el ID mediante email: " + str(e))
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
     return idrest
 
@@ -84,7 +87,8 @@ def GetidRESTPorIDTel(id):
         idRest=str(respuesta.text)
         logging.getLogger( __name__ ).debug("Respuesta de idRESTPorIDTel: " +str(respuesta.text))
     except requests.exceptions.HTTPError as e:
-        logging.getLogger( __name__ ).error("Error obteniendo id del doctor. " + str(e))
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
     return idRest
 
@@ -99,7 +103,8 @@ def GetEmailPorID(id):
         logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuesta))
         email=str(respuesta.get('email'))
     except requests.exceptions.HTTPError as e:
-        logging.getLogger( __name__ ).error("Error obteniendo email del doctor " + str(e))
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
 
     return email
@@ -124,7 +129,8 @@ def GetRolesPorEmail(mail):
         logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
         raise Exception
     except Exception as e:
-        logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
 
     finally:
         return roles

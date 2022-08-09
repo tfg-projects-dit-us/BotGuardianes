@@ -169,7 +169,7 @@ class Evento:
             self.asistentes[correo_asistente]={}
 
         except Exception as e:
-            logging.getLogger( __name__ ).error("Error en set-asistentes. {}".format(e))
+            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return -1
 
         finally:
@@ -196,7 +196,8 @@ class Evento:
                             .format(tipo,rol)
                         ).value="mailto:{}".format(correo_asistente)
                     except Exception as e:
-                        logging.getLogger(__name__).error("Error agregando asistente nuevo. {}".format(e))
+                        logging.getLogger(__name__).error(
+                            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
                         return -1
 
             else:
@@ -365,12 +366,12 @@ class Calendario:
         try:
             lista_ordenada = sorted(lista_eventos, key=lambda x: x.get_fecha_str())
         except BaseException as exception:
-            logging.getLogger( __name__ ).error("Error ordenando lista: " + str(exception))
+            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,exception ))
             return None
         finally:
             return lista_ordenada
 
-    def get_eventos(self, attendee=None):
+    def get_eventos(self, attendee=None,rol=""):
         """
         Obtiene los eventos de un calendario en el periodo del mes actual.
 
@@ -404,14 +405,14 @@ class Calendario:
                             lista_eventos.append(e)
                     elif (attendee != None):
                         logging.getLogger( __name__ ).info("Se ha pedido lista de eventos de una persona")
-                        if e.get_comprobar_asistente(attendee):
+                        if e.get_comprobar_asistente(attendee,rol=rol):
                             lista_eventos.append(e)
 
             logging.getLogger( __name__ ).debug("Lista de eventos en get_eventos:" + str(lista_eventos))
             lista_ordenada = self.ordenar_eventos(lista_eventos)
             return lista_ordenada
         except BaseException as e:
-            logging.getLogger( __name__ ).error("Error cargando eventos: " + str(e))
+            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             print("Error cargando eventos: " + str(e))
             return None
 
@@ -428,7 +429,7 @@ class Calendario:
         try:
             return Evento(self.calendario.event_by_uid(uid=uid_evento))
         except Exception as e:
-            logging.getLogger( __name__ ).error("Error consiguiendo evento de calendario: " + str(e))
+            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return None
 
     def set_evento(self, evento: Evento):
@@ -499,6 +500,51 @@ class Calendario:
 
         except Exception as e:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
+            return None
+
+    def cancelar_evento(self, correo_usuario: str, uid_evento: str, evento: Evento = None):
+        """
+        Busca un evento con la uid concretada en el calendario designado.
+        Si no lo encuentra, usará el evento que se le pase por parámetros
+
+        Esta acción depende del usuario que la envíe. Si es un usuario que estaba en NON-PARTICIPANT, lo borra del evento.
+        Si es un usuario OPT-PARTICIPANT, lo vuelve a poner REQ-PARTICIPANT
+        En el caso de que sea un OPT-PARTICIPANT, se evaluará si quedan sitios libres
+        Si no queda ningun usuario en OPT-PARTICIPANT y se está demandando el turno, se borrará el evento,
+        avisando previamente a los usuarios afectados
+
+        Args:
+            correo_usuario: Correo del usuario que se está tratando de cambiar el rol
+            uid_evento: UID del evento que se está buscando en el calendario
+            evento: Evento que se pretende introducir en el calendario para casos en los que no se encuentra el evento
+
+        Returns:
+            Evento: Evento que se ha podido guardar en el calendario o None en caso de Excepción.
+        """
+        try:
+            logging.getLogger(__name__).debug("Tipo de evento: " + str(type(evento)))
+            evento_buscado = self.get_evento(uid_evento=uid_evento)
+            if isinstance(evento_buscado, Evento):
+                if evento_buscado.get_comprobar_asistente(correo_usuario):
+                    evento_buscado.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
+
+                evento_cedido = self.set_evento(evento_buscado)
+                if evento_cedido == True:
+                    return evento_buscado
+
+            if isinstance(evento, Evento) and not isinstance(evento_buscado, Evento):
+
+                if evento.get_comprobar_asistente(correo_usuario):
+                    evento.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
+
+                evento_cedido = self.set_evento(evento)
+
+                if evento_cedido == True:
+                    return evento
+
+        except Exception as e:
+            logging.getLogger(__name__).error(
+                "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
             return None
 
     def tomar_evento(self, correo_usuario:str , uid_evento:str):

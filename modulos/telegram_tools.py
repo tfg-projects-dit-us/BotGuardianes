@@ -206,27 +206,12 @@ def registro_paso2(update, context):
                     context.bot.send_message(chat_id=update.message.chat_id,
                                              text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
-                kb = [
-                    [
-                        telegram.KeyboardButton('/guardias_disponibles'),
-                        telegram.KeyboardButton('/guardias_propias')
-                    ],
-                    [
-                        telegram.KeyboardButton('Boton 3'),
-                        telegram.KeyboardButton('Boton 4')
-                    ]
-                ]
-
-                kb_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
-
-                context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Seleccione una opcion",
-                                 reply_markup=kb_markup)
+                botones(update,context)
                 return ConversationHandler.END
         except Exception as e:
             context.bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error en la plataforma")
-            logging.getLogger( __name__ ).error("Error al hacer conexion con la API "+str(e))
+            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return ConversationHandler.END
 
     else:
@@ -236,11 +221,11 @@ def registro_paso2(update, context):
 def botones(update, context):
     kb = [
         [
-            telegram.KeyboardButton('/guardias_disponibles'),
-            telegram.KeyboardButton('/guardias_propias')
+            telegram.KeyboardButton('Guardias disponibles para solicitar cambio'),
+            telegram.KeyboardButton('Guardias propias')
         ],
         [
-            telegram.KeyboardButton('Boton 3'),
+            telegram.KeyboardButton('Guardias pendientes de ser aprobadas o denegadas'),
             telegram.KeyboardButton('Boton 4')
         ]
     ]
@@ -288,15 +273,23 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
     """
     reply_markup=[]
     mensaje=None
+    texto = ""
+    if accion == "cancelar":
+        texto = "Cancelar propuesta de cambio"
+    if accion == "tomar":
+        texto = "Pedir este turno"
+    if accion == "ceder":
+        texto = "Ofrecer este turno"
+
     if modo=="resumen":
         boton_callback = [[telegram.InlineKeyboardButton
                 (
-                    text="{} - {}".format(evento.get_summary(),evento.get_fecha_str()),
+                    text="{}".format(texto),
                     callback_data="{};{}".format(accion,evento.get_uid())
                 )
                 ]]
 
-        cadena = "<b>{}</b> en fecha: {}\nSitios libres: {}".format(evento.get_summary(), evento.get_fecha_str(),evento.get_sitios_libres())
+        cadena = "<b>{}</b>\nFecha: {}\nSitios libres: {}".format(evento.get_summary(), evento.get_fecha_str(),evento.get_sitios_libres())
         if accion!="nada":
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
             mensaje=bot.send_message(chat_id=id_chat, text=cadena, reply_markup=reply_markup,parse_mode="HTML")
@@ -328,7 +321,7 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
                     cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre, asistente)
         cadena += "\nen fecha: <b>{}</b>".format(evento.get_fecha_str())
         boton_callback = [[telegram.InlineKeyboardButton(
-            text="Proponer cambio de guardia", callback_data="{};{}".format(accion,evento.get_uid()))]]
+            text=texto, callback_data="{};{}".format(accion,evento.get_uid()))]]
         if accion != "nada":
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
 
@@ -338,6 +331,46 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
             cadena = "Evento en el que se ha inscrito a la espera de aprobación\n\n" + cadena
             mensaje=bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
     return mensaje.message_id
+
+
+@autenticar
+def guardiaspendientes(update,context):
+    """
+        Función para obtener las guardias en las que el usuario está demandando turno pero aún no se ha aprobado el cambio.
+
+        Args:
+            update: Objeto con parámetros del mensaje que envía el usuario al bot
+            context: Objeto con funciones de contexto del bot de telegram
+
+        """
+    global cal_principal, cal_propuestas
+    reply_markup = []
+    lista_botones = []
+    cadena = ""
+    try:
+        idrest = servicio_rest.GetidRESTPorIDTel(update.message.chat_id)
+        nombre_usuario = servicio_rest.GetNombrePorID(id=idrest)
+        email_usuario = servicio_rest.GetEmailPorID(id=idrest)
+        lista_eventos_ofertados = cal_propuestas.get_eventos(attendee=email_usuario,rol="OPT-PARTICIPANT")
+        lista_eventos_demandados = cal_propuestas.get_eventos(attendee=email_usuario,rol="NON-PARTICIPANT")
+
+        if lista_eventos_ofertados == [] and lista_eventos_demandados==[]:
+            context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
+            logging.getLogger(__name__).debug("No hay guardias disponibles")
+        else:
+            for e in lista_eventos_ofertados:
+                mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
+            for e in lista_eventos_demandados:
+                mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
+
+            logging.getLogger(__name__).debug(cadena)
+
+    except Exception as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Ha habido un error en la plataforma\nContacte por favor con soporte")
+
 @autenticar
 def guardiasdisponibles(update, context):
     """
@@ -365,7 +398,8 @@ def guardiasdisponibles(update, context):
             logging.getLogger( __name__ ).debug(cadena)
 
     except Exception as e:
-        logging.getLogger( __name__ ).error(str(e))
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
@@ -404,13 +438,12 @@ def guardiaspropias(update, context):
 
 
     except Exception as e:
-        logging.getLogger( __name__ ).warning("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         context.bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
                              )
-@autenticar
-def guardias_pendientes_aprobacion(update, context):
-    pass
+
 def ceder_evento(uid,attendee):
     """
     Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
@@ -484,7 +517,7 @@ def retorno_ceder(update, context):
     Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
     Toma una acción a realizar con un evento y su uid
 
-    Si la acción es ceder, cambia el rol del usuario a OPT-PARTICIPANT para designar un hueco libre en el calendario de propuestas
+    La acción es ceder, cambia el rol del usuario a OPT-PARTICIPANT para designar un hueco libre en el calendario de propuestas
 
     Args:
         update: Objeto con parámetros del mensaje que envía el usuario al bot
@@ -501,6 +534,59 @@ def retorno_ceder(update, context):
             accion, uid_evento=update.callback_query.data.split(';')
 
             if accion=="ceder":
+                correo=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+                cedido=ceder_evento(uid_evento,correo)
+
+                if isinstance(cedido,gestor_calendario.Evento):
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento")
+                    cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (cedido.get_uid(),) )
+                    idmensaje = cursor.fetchall()
+                    if idmensaje==[]:
+                        idmensaje=mostrar_datos_evento("resumen",cedido,canalid,"tomar")
+                        cursor.execute(f"""INSERT OR REPLACE INTO  relaciones_id  (Idevento,Idmessage)
+                                       VALUES ( COALESCE((SELECT Idevento FROM relaciones_id WHERE Idevento="{cedido.get_uid()}"),"{cedido.get_uid()}"),"{idmensaje}");""")
+                        relacion.commit()
+                    else:
+                        idmensaje=idmensaje[0][0]
+                        editar_datos_evento(cedido,canalid,idmensaje,"tomar")
+
+
+
+            logging.getLogger( __name__ ).debug("UID del evento es:{} por el usuario {}".
+                                                format(uid_evento,update.callback_query.from_user.id))
+        cursor.close()
+        relacion.close()
+    except BaseException as e:
+        logging.getLogger( __name__ ).error("Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
+                                            format(sys._getframe(1).f_code.co_name,uid_evento,update.callback_query,e ))
+        cursor.close()
+        relacion.close()
+
+@autenticar_retorno
+def retorno_cancelar(update, context):
+    """
+    Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
+    Toma una acción a realizar con un evento y su uid
+
+    La acción es cancelar, si es un usuario que estaba en NON-PARTICIPANT, lo borra del evento, y si es un usuario OPT-PARTICIPANT, lo vuelve a poner REQ-PARTICIPANT
+    En el segundo caso,se evaluará si quedan sitios libres, si no queda ninguno en OPT-PARTICIPANT y se está demandando el turno, se borrará el evento,
+    avisando previamente a los usuarios afectados
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    """
+    global cal_principal, cal_propuestas,bot,canalid
+    relacion=sqlite3.connect('./relacionesids')
+    cursor=relacion.cursor()
+
+    try:
+        if update.callback_query.answer():
+            logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
+            accion, uid_evento=update.callback_query.data.split(';')
+
+            if accion=="cancelar":
                 correo=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
                 cedido=ceder_evento(uid_evento,correo)
 

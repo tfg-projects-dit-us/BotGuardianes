@@ -88,10 +88,12 @@ if __name__ == '__main__':
 
     botones_handler = CommandHandler('botones', telegram_tools.botones)
     # Añadimos función de guardias disponibles
-    gdisp_handler = CommandHandler('guardias_disponibles', telegram_tools.guardiasdisponibles)
+    gdisp_handler = MessageHandler(Filters.regex('Guardias disponibles'), telegram_tools.guardiasdisponibles)
     dispatcher.add_handler(botones_handler)
     dispatcher.add_handler(gdisp_handler)
-    gdisp_handler = CommandHandler('guardias_propias', telegram_tools.guardiaspropias)
+    gdisp_handler = MessageHandler(Filters.regex('Guardias propias'), telegram_tools.guardiaspropias)
+    dispatcher.add_handler(gdisp_handler)
+    gdisp_handler = MessageHandler(Filters.regex('Guardias pendientes'), telegram_tools.guardiaspendientes)
     dispatcher.add_handler(gdisp_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_ceder,pattern="ceder")
     dispatcher.add_handler(callback_handler)
@@ -100,6 +102,8 @@ if __name__ == '__main__':
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_aceptar,pattern="aceptar")
     dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_denegar,pattern="denegar")
+    dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_cancelar,pattern="cancelar")
     dispatcher.add_handler(callback_handler)
     updater.start_polling()
 
