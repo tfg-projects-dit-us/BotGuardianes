@@ -2,11 +2,9 @@ from telegram.ext import (ExtBot,Updater, CommandHandler, MessageHandler, Filter
 import logging
 import sys
 import telegram
-import ics
 import datetime
 import pytz
 import calendar
-import arrow
 import locale
 import yaml
 import os.path

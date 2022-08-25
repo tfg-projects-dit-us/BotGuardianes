@@ -17,18 +17,15 @@ Y los métodos de módulo:
 
 import datetime
 import typing
-
-import icalendar
-import pytz
 import sys
 from urllib.parse import urlparse
 import logging
 import itertools
 
+import icalendar
+import pytz
 import arrow
 import requests
-import calendar
-import ics
 import caldav
 
 
@@ -206,7 +203,51 @@ class Evento:
                             .format(tipo,rol)
                 ).value="mailto:{}".format(correo_asistente)
             return 0
-    def get_asistente_rol(self,asistente:str):
+    def erase_asistente(self,asistente:str):
+        """
+        Borra al asistente de un evento. Se usa cuando se cancela una propuesta por parte de un demandante.
+
+        Comprueba si el asistente está en el evento, comprueba si está en NON-PARTICIPANT y lo borra del calendario.
+
+
+        Args:
+            asistente: correo del asistente a borrar
+
+        Returns:
+            True si lo borra con éxito, False si no
+        """
+        result=False
+        try:
+            del self.asistentes[asistente]
+
+            existente = False
+            for i, attendee in enumerate(self.Event.vobject_instance.vevent.attendee_list):
+
+                if str(urlparse(attendee.value).path) == asistente:
+                    del self.Event.vobject_instance.vevent.attendee_list[i]
+                    existente = True
+            result=True
+
+        except KeyError as e:
+            logging.getLogger(__name__).error(
+                "Excepción en función {}. Motivo: {}. El correo del asistente no está incluido en el evento".format(sys._getframe(1).f_code.co_name, e))
+            return False
+        except Exception as e:
+            logging.getLogger(__name__).error(
+                "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+            return False
+
+    def get_rol_asistente(self, asistente:str):
+        """
+        Devuelve el rol del asistente que se pasa por parámetro
+
+        Args:
+            asistente: Correo del asistente
+
+        Returns:
+            rol del asistente en cadena
+        """
+
         return self.asistentes[asistente]['rol']
     def get_cuenta_asistentes(self):
         cuenta=0
@@ -274,16 +315,19 @@ class Evento:
 
         return sitios_libres
 
-    def get_comprobar_asistente(self,attendee:str,rol=""):
+    def get_comprobar_asistente(self, asistente:str, rol=""):
         """
         Comprueba si un asistente está en un evento
 
+        Args:
+            asistente: Correo del asistente que se comprueba
+            rol: Parámetro opcional. Sirve para comprobar si un usuario tiene cierto rol en concreto en el evento
         Returns:
-            True si está, False si no
+            True si está ( con el rol en concreto si es especificado), False si no
         """
         resultado=False
-        for asistente in self.asistentes:
-            if (attendee == asistente):
+        for attendee in self.asistentes:
+            if (asistente == attendee):
                 logging.getLogger(__name__).debug("Evento con el usuario incluido Atendee {}".format(str(asistente)))
                 if rol=="":
                     resultado=True
@@ -378,7 +422,8 @@ class Calendario:
         Args:
             attendee(Por defecto None): Asistente para quien estamos obteniendo lista de eventos.
                 Si es None, obtenemos todos los eventos del periodo
-                Si tiene un valor, obtenemos solo los eventos con este asistente suscrito.
+                Si tiene un valor, obtenemos solo los eventos con este asistente suscrito.ç
+            rol(Por defecto ""): Rol del asistente. Se utiliza para buscar eventos con cierto rol del participante
 
         Returns:
             list(gestor_calendario.Evento): Lista de Evento
@@ -521,26 +566,37 @@ class Calendario:
         Returns:
             Evento: Evento que se ha podido guardar en el calendario o None en caso de Excepción.
         """
+        evento_cancelado=False
         try:
             logging.getLogger(__name__).debug("Tipo de evento: " + str(type(evento)))
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
-                if evento_buscado.get_comprobar_asistente(correo_usuario):
-                    evento_buscado.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
+                rol_asistente=evento_buscado.get_rol_asistente(asistente=correo_usuario)
+                if rol_asistente=="OPT-PARTICIPANT":
 
-                evento_cedido = self.set_evento(evento_buscado)
-                if evento_cedido == True:
+                    ofertantes=evento_buscado.get_cuenta_ofertantes()
+                    demandantes=evento_buscado.get_cuenta_demandantes()
+                    asistentes=evento_buscado.get_cuenta_asistentes()
+
+                    if ofertantes > demandantes:
+                        evento_buscado.set_asistente(correo_usuario, rol="REQ-PARTICIPANT")
+                        evento_cancelado = self.set_evento(evento_buscado)
+                    if ofertantes <= demandantes:
+                        pass
+                    """Se envía un mensaje al usuario indicando que no puede realizar esta acción"""
+
+
+                    if ofertantes == 0:
+                        evento_buscado.Event.delete()
+                        evento_cancelado=True
+                if rol_asistente=="NON-PARTICIPANT":
+                    evento_buscado.erase_asistente(correo_usuario)
+                    evento_cancelado = self.set_evento(evento_buscado)
+
+
+
+                if evento_cancelado == True:
                     return evento_buscado
-
-            if isinstance(evento, Evento) and not isinstance(evento_buscado, Evento):
-
-                if evento.get_comprobar_asistente(correo_usuario):
-                    evento.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
-
-                evento_cedido = self.set_evento(evento)
-
-                if evento_cedido == True:
-                    return evento
 
         except Exception as e:
             logging.getLogger(__name__).error(

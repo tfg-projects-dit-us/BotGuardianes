@@ -22,7 +22,6 @@ from urllib.parse import urlparse
 from functools import wraps
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 import telegram
-import ics
 
 from modulos import gestor_calendario
 from modulos import servicio_rest
@@ -186,7 +185,7 @@ def registro_paso2(update, context):
             logging.getLogger( __name__ ).debug("Respuesta a GETIDPorEmail es:" + str(respuesta) + " tipo " + str(respuesta.isdigit()))
             if respuesta.isdigit():
                 idusuario = respuesta
-            elif "Could not fing a doctor" in respuesta:
+            elif respuesta=="Email not found":
                 context.bot.send_message(chat_id=update.message.chat_id,
                                         text="Su correo no ha sido encontrado en la plataforma.\nPor favor, consulte al "
                                              "administrador de su sistema para comprobar que sus datos estan adecuadamente "
@@ -201,7 +200,7 @@ def registro_paso2(update, context):
                 # enviaríamos el id
                 if respuesta=='ID de telegram actualizado':
                     context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="Ha sido registrado en la plataforma,{}".format(servicio_rest.GetNombrePorID(idusuario)))  # Imprimimos su nombre
+                                     text="Ha sido registrado en la plataforma, {}".format(servicio_rest.GetNombrePorID(idusuario)))  # Imprimimos su nombre
                 else:
                     context.bot.send_message(chat_id=update.message.chat_id,
                                              text="Ha habido un error en la plataforma\nContacte por favor con soporte")
@@ -210,7 +209,7 @@ def registro_paso2(update, context):
                 return ConversationHandler.END
         except Exception as e:
             context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Ha habido un error en la plataforma")
+                             text="Ha habido un error en la plataforma\nContacte por favor con soporte")
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return ConversationHandler.END
 
@@ -226,7 +225,6 @@ def botones(update, context):
         ],
         [
             telegram.KeyboardButton('Guardias pendientes de ser aprobadas o denegadas'),
-            telegram.KeyboardButton('Boton 4')
         ]
     ]
 
@@ -304,19 +302,19 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         if evento.get_cuenta_asistentes()>0:
             cadena += "<i>Asignado a</i>:\n"
             for asistente in evento.get_asistentes():
-                if evento.get_asistente_rol(asistente)=="REQ-PARTICIPANT":
+                if evento.get_rol_asistente(asistente)== "REQ-PARTICIPANT":
                     nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
                     cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre,asistente)
         if evento.get_cuenta_ofertantes()>0:
             cadena += "\n<i>Ofertantes del turno</i>:\n"
             for asistente in evento.get_asistentes():
-                if evento.get_asistente_rol(asistente)=="OPT-PARTICIPANT":
+                if evento.get_rol_asistente(asistente)== "OPT-PARTICIPANT":
                     nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
                     cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre,asistente)
         if evento.get_cuenta_demandantes() > 0:
             cadena += "\n<i>Demandantes del turno</i>:\n"
             for asistente in evento.get_asistentes():
-                if evento.get_asistente_rol(asistente) == "NON-PARTICIPANT":
+                if evento.get_rol_asistente(asistente) == "NON-PARTICIPANT":
                     nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
                     cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre, asistente)
         cadena += "\nen fecha: <b>{}</b>".format(evento.get_fecha_str())
@@ -355,8 +353,8 @@ def guardiaspendientes(update,context):
         lista_eventos_demandados = cal_propuestas.get_eventos(attendee=email_usuario,rol="NON-PARTICIPANT")
 
         if lista_eventos_ofertados == [] and lista_eventos_demandados==[]:
-            context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias disponibles")
-            logging.getLogger(__name__).debug("No hay guardias disponibles")
+            context.bot.send_message(chat_id=update.message.chat_id, text="No hay guardias pendientes de ser aprobadas o denegadas")
+            logging.getLogger(__name__).debug("No hay guardias pendientes de ser aprobadas o denegadas")
         else:
             for e in lista_eventos_ofertados:
                 mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
@@ -464,7 +462,25 @@ def ceder_evento(uid,attendee):
     except Exception as e:
         logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return None
+def cancelar_propuesta_evento(uid,attendee):
+    """
+    Función para que un usuario pueda cancelar su propuesta de cambio
 
+    Args:
+        uid: Identificador único de un evento, que se utilizará para buscar el evento en el calendario
+        attendee: Correo del usuario que va a cancelar su propuesta
+
+    Returns:
+        Devuelve un Evento si es de clase Evento. En caso de haber excepción devuelve None
+    """
+    try:
+        evento_cancelado=cal_propuestas.cancelar_evento(correo_usuario=attendee,uid_evento=uid)
+
+        if isinstance(evento_cancelado,gestor_calendario.Evento):
+            return evento_cancelado
+    except Exception as e:
+        logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
+        return None
 def tomar_evento(uid,attendee):
     """
     Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
@@ -588,20 +604,23 @@ def retorno_cancelar(update, context):
 
             if accion=="cancelar":
                 correo=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
-                cedido=ceder_evento(uid_evento,correo)
+                cancelado=cancelar_propuesta_evento(uid_evento,correo)
 
-                if isinstance(cedido,gestor_calendario.Evento):
-                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento")
-                    cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (cedido.get_uid(),) )
+                if isinstance(cancelado,gestor_calendario.Evento):
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cancelado con éxito")
+                    cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (cancelado.get_uid(),) )
                     idmensaje = cursor.fetchall()
                     if idmensaje==[]:
-                        idmensaje=mostrar_datos_evento("resumen",cedido,canalid,"tomar")
-                        cursor.execute(f"""INSERT OR REPLACE INTO  relaciones_id  (Idevento,Idmessage)
-                                       VALUES ( COALESCE((SELECT Idevento FROM relaciones_id WHERE Idevento="{cedido.get_uid()}"),"{cedido.get_uid()}"),"{idmensaje}");""")
-                        relacion.commit()
+                        if cancelado.get_sitios_libres()>0:
+                            idmensaje=mostrar_datos_evento("resumen",cancelado,canalid,"tomar")
+                            cursor.execute(f"""INSERT OR REPLACE INTO  relaciones_id  (Idevento,Idmessage)
+                                       VALUES ( COALESCE((SELECT Idevento FROM relaciones_id WHERE Idevento="{cancelado.get_uid()}"),"{cancelado.get_uid()}"),"{idmensaje}");""")
+                            relacion.commit()
+                        else:
+                            pass
                     else:
                         idmensaje=idmensaje[0][0]
-                        editar_datos_evento(cedido,canalid,idmensaje,"tomar")
+                        editar_datos_evento(cancelado,canalid,idmensaje,"cancelar")
 
 
 

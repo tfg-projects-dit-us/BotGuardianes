@@ -45,7 +45,8 @@ def InsertaTelegramID(idusuario,chatid):
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
 
-    return respuesta.text
+    if respuesta.status_code ==200:
+        return respuesta.text
 def GetIDPorEmail(email):
     try:
         respuesta=requests.get(url_getID,
@@ -59,7 +60,12 @@ def GetIDPorEmail(email):
         logging.getLogger(__name__).error(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
-    return idrest
+
+    if respuesta.status_code ==200:
+        return idrest
+    if "Could not fing a doctor" in respuesta.text:
+        return "Email not found"
+
 
 def GetNombrePorID(id):
     respuesta=None
@@ -67,14 +73,15 @@ def GetNombrePorID(id):
     try:
         respuesta=requests.get(url_getnombre+'/'+str(id),
                                auth=HTTPBasicAuth(usuario,password)
-                               ).json()
-        logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuesta))
-        nombre=str(respuesta.get('firstName')) + " " + str(respuesta.get('lastNames'))
+                               )
+        respuestajson=respuesta.json()
+        logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuestajson))
+        nombre=str(respuestajson.get('firstName')) + " " + str(respuestajson.get('lastNames'))
     except requests.exceptions.HTTPError as e:
         logging.getLogger( __name__ ).error("Error obteniendo nombre del doctor " + str(e))
         raise Exception
-
-    return nombre
+    if respuesta.status_code==200:
+        return nombre
 
 def GetidRESTPorIDTel(id):
     respuesta=None
@@ -90,7 +97,8 @@ def GetidRESTPorIDTel(id):
         logging.getLogger(__name__).error(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
-    return idRest
+    if respuesta.status_code==200:
+        return idRest
 
 
 def GetEmailPorID(id):
@@ -99,9 +107,10 @@ def GetEmailPorID(id):
     try:
         respuesta=requests.get(url_getnombre+'/'+str(id),
                                auth=HTTPBasicAuth(usuario,password)
-                               ).json()
-        logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuesta))
-        email=str(respuesta.get('email'))
+                               )
+        respuestajson=respuesta.json()
+        logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuestajson))
+        email=str(respuestajson.get('email'))
     except requests.exceptions.HTTPError as e:
         logging.getLogger(__name__).error(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))

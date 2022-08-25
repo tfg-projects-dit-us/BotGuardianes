@@ -3,7 +3,6 @@ import locale
 import os.path
 import datetime
 import logging
-import ics
 import requests
 import sys
 
