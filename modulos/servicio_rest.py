@@ -1,6 +1,7 @@
 import requests
 import logging
 import sys
+import ast
 from requests.auth import HTTPBasicAuth
 
 
@@ -9,17 +10,19 @@ url_getID=None
 url_getnombre=None
 url_getIDrestporIDtel=None
 url_getroles=None
+url_getIDtelporIDrest=None
 usuario=None
 password=None
-def start(user=None,contrasena=None,inserta=None,getID=None,getnombre=None,getIDrest=None,getRol=None):
+def start(user=None, contrasena=None, inserta_id_tel_por_id_rest=None, get_id_por_email=None, get_nombre_por_id_rest=None, get_id_rest_por_id_tel=None, get_rol_por_email=None,get_id_tel_por_id_rest=None):
     #La palabra clave global sirve para poder modificar la variable que está fuera del ámbito de esta variable dentro del
     #módulo, no accesible fuera del módulo sin llamar al módulo en sí
-    global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel, url_getroles
-    url_inserta=inserta
-    url_getID= getID
-    url_getnombre=getnombre
-    url_getIDrestporIDtel=getIDrest
-    url_getroles=getRol
+    global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel, url_getroles,url_getIDtelporIDrest
+    url_inserta=inserta_id_tel_por_id_rest
+    url_getID= get_id_por_email
+    url_getnombre=get_nombre_por_id_rest
+    url_getIDrestporIDtel=get_id_rest_por_id_tel
+    url_getroles=get_rol_por_email
+    url_getIDtelporIDrest=get_id_tel_por_id_rest
     usuario=user
     password=contrasena
     logging.getLogger( __name__ ).debug("Inicializado el objeto REST con valores: " +
@@ -82,7 +85,8 @@ def GetNombrePorID(id):
         raise Exception
     if respuesta.status_code==200:
         return nombre
-
+    if "Could not fing a doctor" in respuesta.text:
+        return "Email not found"
 def GetidRESTPorIDTel(id):
     respuesta=None
     nombre=None
@@ -99,7 +103,8 @@ def GetidRESTPorIDTel(id):
         raise Exception
     if respuesta.status_code==200:
         return idRest
-
+    if "Could not fing a doctor" in respuesta.text:
+        return "Email not found"
 
 def GetEmailPorID(id):
     respuesta=None
@@ -133,13 +138,58 @@ def GetRolesPorEmail(mail):
             if "Nombre rol=Administrativo" in respuesta.text:
                 roles.append("Administrativo")
         logging.getLogger( __name__ ).debug("Respuesta de GetRolesPorEmail: " + str(roles))
-
+        if "Could not fing a doctor" in respuesta.text:
+            return "Email not found"
     except requests.exceptions.HTTPError as e:
         logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
         raise Exception
+
     except Exception as e:
         logging.getLogger(__name__).error(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
 
     finally:
         return roles
+
+def GetidTelPoridREST(id):
+    respuesta = None
+    nombre = None
+    try:
+        respuesta = requests.get(url_getIDtelporIDrest,
+                                 auth=HTTPBasicAuth(usuario, password),
+                                 params={'id': str(id)}
+                                 )
+        idTel= str(respuesta.text)
+        logging.getLogger(__name__).debug("Respuesta de idRESTPorIDTel: " + str(respuesta.text))
+    except requests.exceptions.HTTPError as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+        raise Exception
+    if respuesta.status_code == 200:
+        return idTel
+    if "Could not find the doctor" in respuesta.text:
+        return "Email not found"
+
+
+def GetAdmins():
+    respuesta = None
+    admines=[]
+    try:
+        respuesta = requests.get(url_getroles,
+                                 auth=HTTPBasicAuth(usuario, password),
+                                    params = {'rol': "Administrador"}
+                                 )
+        if respuesta.status_code==200:
+            admines=respuesta.text.strip('][').split(', ')
+
+
+        return admines
+    except requests.exceptions.HTTPError as e:
+        logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
+        raise Exception
+
+    except Exception as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+    finally:
+        return admines

@@ -46,10 +46,10 @@ def autenticar(func):
     @wraps(func)
     def wrapper(*args,**kwargs):
         id_user=args[0].message.chat_id
-        respuesta=servicio_rest.GetidRESTPorIDTel(id_user)
-        if respuesta.isdigit():
+        id_rest=servicio_rest.GetidRESTPorIDTel(id_user)
+        if id_rest.isdigit():
             func(*args, **kwargs)
-        elif "Could not fing a doctor" in respuesta:
+        elif "Email not found" in id_rest:
             args[1].bot.send_message(chat_id=id_user,
                                         text="No se encuentra identificado y registrado en la plataforma."
                                              "Por favor, regístrese con la función /start")
@@ -69,10 +69,10 @@ def autenticar_retorno(func):
     @wraps(func)
     def wrapper(*args,**kwargs):
         id_user=str(args[0].callback_query.from_user.id)
-        respuesta=servicio_rest.GetidRESTPorIDTel(id_user)
-        if respuesta.isdigit():
+        id_rest=servicio_rest.GetidRESTPorIDTel(id_user)
+        if id_rest.isdigit():
             func(*args, **kwargs)
-        elif "Could not fing a doctor" in respuesta:
+        elif "Email not found" in id_rest:
             args[1].bot.send_message(chat_id=id_user,
                                         text="No se encuentra identificado y registrado en la plataforma."
                                              "Por favor, regístrese con la función /start")
@@ -92,16 +92,19 @@ def autenticar_retorno_admin(func):
     def wrapper(*args,**kwargs):
         id_user=str(args[0].callback_query.from_user.id)
         id_rest=servicio_rest.GetidRESTPorIDTel(id_user)
-        email=servicio_rest.GetEmailPorID(id_rest)
-        roles=servicio_rest.GetRolesPorEmail(email)
-        if "Administrador" in roles:
-            if id_rest.isdigit():
-                func(*args, **kwargs)
-        elif "Could not fing a doctor" in respuesta:
+        if id_rest.isdigit():
+            email=servicio_rest.GetEmailPorID(id_rest)
+            roles=servicio_rest.GetRolesPorEmail(email)
+            if "Administrador" in roles:
+                    func(*args, **kwargs)
+            else:
+                args[1].bot.send_message(chat_id=id_user,
+                                             text="No tiene el rol adecuado para esta función."
+                                                  "Verifique sus permisos con el administrador del sistema")
+        if "Email not found" in id_rest:
             args[1].bot.send_message(chat_id=id_user,
                                         text="No se encuentra identificado y registrado en la plataforma."
                                              "Por favor, regístrese con la función /start")
-
     return wrapper
 
 
@@ -118,14 +121,19 @@ def autenticar_admin(func):
     def wrapper(*args,**kwargs):
         id_user=args[0].message.chat_id
         id_rest=servicio_rest.GetidRESTPorIDTel(id_user)
-        email=servicio_rest.GetEmailPorID(id_rest)
-        roles=servicio_rest.GetRolesPorEmail(email)
-        if "Administrador" in roles:
-            func(*args,**kwargs)
-        else:
+        if id_rest.isdigit():
+            email=servicio_rest.GetEmailPorID(id_rest)
+            roles=servicio_rest.GetRolesPorEmail(email)
+            if "Administrador" in roles:
+                    func(*args,**kwargs)
+            else:
+                args[1].bot.send_message(chat_id=id_user,
+                                         text="No tiene el rol adecuado para esta función."
+                                              "Verifique sus permisos con el administrador del sistema")
+        if "Email not found" in id_rest:
             args[1].bot.send_message(chat_id=id_user,
-                                     text="No tiene el rol adecuado para esta función."
-                                          "Verifique sus permisos con el administrador del sistema")
+                                        text="No se encuentra identificado y registrado en la plataforma."
+                                             "Por favor, regístrese con la función /start")
     return wrapper
 
 def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None):
@@ -217,16 +225,45 @@ def registro_paso2(update, context):
         update.message.reply_text("La cadena no tiene un @. Intente de nuevo enviar su correo")
         return 1
 
+@autenticar
 def botones(update, context):
-    kb = [
-        [
-            telegram.KeyboardButton('Guardias disponibles para solicitar cambio'),
-            telegram.KeyboardButton('Guardias propias')
-        ],
-        [
-            telegram.KeyboardButton('Guardias pendientes de ser aprobadas o denegadas'),
-        ]
-    ]
+    """
+    Función para mostrar los botones en el chat que ejecutarán las funciones para el usuario
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    """
+    id_user = update.message.chat_id
+    id_rest = servicio_rest.GetidRESTPorIDTel(id_user)
+    if id_rest.isdigit():
+        email = servicio_rest.GetEmailPorID(id_rest)
+        roles = servicio_rest.GetRolesPorEmail(email)
+        if "Administrador" in roles:
+            kb = [
+                [
+                    telegram.KeyboardButton('Guardias disponibles para solicitar cambio'),
+                    telegram.KeyboardButton('Guardias propias')
+                ],
+                [
+                    telegram.KeyboardButton('Guardias pendientes de ser aprobadas o denegadas'),
+                ],
+                [
+                    telegram.KeyboardButton('Aprobar o denegar guardias')
+                ]
+            ]
+        else:
+            kb = [
+                [
+                    telegram.KeyboardButton('Guardias disponibles para solicitar cambio'),
+                    telegram.KeyboardButton('Guardias propias')
+                ],
+                [
+                    telegram.KeyboardButton('Guardias pendientes de ser aprobadas o denegadas')
+                ]
+            ]
+
 
     kb_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
 
@@ -278,6 +315,8 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         texto = "Pedir este turno"
     if accion == "ceder":
         texto = "Ofrecer este turno"
+    if accion=="aprobar_denegar":
+        texto= "Aprobar este cambio de turno"
 
     if modo=="resumen":
         boton_callback = [[telegram.InlineKeyboardButton
@@ -320,19 +359,32 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         cadena += "\nen fecha: <b>{}</b>".format(evento.get_fecha_str())
         boton_callback = [[telegram.InlineKeyboardButton(
             text=texto, callback_data="{};{}".format(accion,evento.get_uid()))]]
-        if accion != "nada":
+        if accion != "nada" and accion!= "aprobar_denegar":
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
 
             mensaje=bot.send_message(chat_id=id_chat, text=cadena,
                                  reply_markup=reply_markup,parse_mode="HTML")
-        else:
-            cadena = "Evento en el que se ha inscrito a la espera de aprobación\n\n" + cadena
+        elif accion=="aprobar_denegar":
+            boton_callback = [
+                [
+                    telegram.InlineKeyboardButton(
+                        text="Aprobar este cambio de turno", callback_data="{};{}".format("aprobar", evento.get_uid())
+                    ),
+
+                    telegram.InlineKeyboardButton(
+                        text="Denegar este cambio de turno", callback_data="{};{}".format("denegar", evento.get_uid())
+                    )
+                ]]
+            reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
+            mensaje = bot.send_message(chat_id=id_chat, text=cadena,
+                                       reply_markup=reply_markup, parse_mode="HTML")
+        if accion=="nada":
             mensaje=bot.send_message(chat_id=id_chat, text=cadena, parse_mode="HTML")
     return mensaje.message_id
 
 
 @autenticar
-def guardiaspendientes(update,context):
+def guardias_pendientes(update, context):
     """
         Función para obtener las guardias en las que el usuario está demandando turno pero aún no se ha aprobado el cambio.
 
@@ -370,7 +422,7 @@ def guardiaspendientes(update,context):
                                  text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
 @autenticar
-def guardiasdisponibles(update, context):
+def guardias_disponibles(update, context):
     """
     Función para obtener las guardias en las que hay al menos un puesto con propuesta de cambio.
 
@@ -402,7 +454,7 @@ def guardiasdisponibles(update, context):
                                  text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
 @autenticar
-def guardiaspropias(update, context):
+def guardias_propias(update, context):
     """
     Función para obtener las guardias propias del usuario actualmente establecidas.
 
@@ -432,6 +484,49 @@ def guardiaspropias(update, context):
         for e in lista_eventos:
             logging.getLogger( __name__ ).debug("Evento con el usuario incluido: {}".format(e))
             mostrar_datos_evento("completo",evento=e,id_chat=update.message.chat_id,accion="ceder")
+
+
+
+    except Exception as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+        context.bot.send_message(chat_id=update.message.chat_id,
+                             text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
+                             )
+@autenticar_admin
+def guardias_aprobar_denegar(update, context):
+    """
+    Función para obtener las guardias que están pendientes de aprobar o denegar y dar la posibilidad de aceptar o denegar el cambio
+    Se imprimirán las guardias y se colocarán botones para aprobar o denegar el cambio.
+
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    """
+    global cal_principal, cal_propuestas
+    # reply_markup=telegram.InlineKeyboardMarkup([])
+    cadena = ""
+    lista_eventos=[]
+    try:
+        idrest=servicio_rest.GetidRESTPorIDTel(update.message.chat_id)
+        nombre_usuario=servicio_rest.GetNombrePorID(id=idrest)
+        email_usuario=servicio_rest.GetEmailPorID(id=idrest)
+
+        lista_eventos = cal_propuestas.get_eventos(completos=True)
+        # Aqui pediriamos el nombre del usuario a traves de REST, usando el id de Telegram como dato
+        # hace falta una función de obtener la ID por la ID de Telegram
+        logging.getLogger(__name__).debug(
+            "El usuario {} ha solicitado las guardias para aprobar o denegar. Fecha actual {}".format(nombre_usuario,
+                                                                                                      datetime.date.today()))
+
+        if lista_eventos == []:
+            context.bot.send_message(chat_id=update.message.chat_id, text="No hay eventos pendientes de aceptar o denegar")
+            # key=lambda fecha: e.vobject_instance.vevent.dstart
+        for e in lista_eventos:
+            logging.getLogger(__name__).debug("Evento para denegar o aprobar: {}".format(e))
+            mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="aprobar_denegar")
 
 
 
@@ -555,7 +650,7 @@ def retorno_ceder(update, context):
 
                 if isinstance(cedido,gestor_calendario.Evento):
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento")
-                    cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (cedido.get_uid(),) )
+                    cursor.execute(f"""SELECT Idmessage FROM relaciones_id where Idevento="{cedido.get_uid()}";""")
                     idmensaje = cursor.fetchall()
                     if idmensaje==[]:
                         idmensaje=mostrar_datos_evento("resumen",cedido,canalid,"tomar")
@@ -608,7 +703,7 @@ def retorno_cancelar(update, context):
 
                 if isinstance(cancelado,gestor_calendario.Evento):
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cancelado con éxito")
-                    cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (cancelado.get_uid(),) )
+                    cursor.execute(f"""SELECT Idmessage FROM relaciones_id where Idevento="{cancelado.get_uid()}";""" )
                     idmensaje = cursor.fetchall()
                     if idmensaje==[]:
                         if cancelado.get_sitios_libres()>0:
@@ -617,10 +712,11 @@ def retorno_cancelar(update, context):
                                        VALUES ( COALESCE((SELECT Idevento FROM relaciones_id WHERE Idevento="{cancelado.get_uid()}"),"{cancelado.get_uid()}"),"{idmensaje}");""")
                             relacion.commit()
                         else:
+                            """El evento no tiene sitios libres¿se avisa o se borra del calendario?"""
                             pass
                     else:
                         idmensaje=idmensaje[0][0]
-                        editar_datos_evento(cancelado,canalid,idmensaje,"cancelar")
+                        editar_datos_evento(cancelado,canalid,idmensaje,"tomar")
 
 
 
@@ -663,22 +759,38 @@ def retorno_tomar(update, context):
 
 
                 if isinstance(tomado,gestor_calendario.Evento):
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Evento en el que se ha inscrito")
                     mostrar_datos_evento("completo", tomado, update.callback_query.from_user.id, "nada")
                     if tomado.get_sitios_libres()==0:
                         if update.callback_query.message.chat_id!=canalid:
                             borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=update.callback_query.message.message_id)
-                            cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;",(tomado.get_uid()),)
+                            cursor.execute(f"""SELECT Idmessage FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
                             idmensaje=cursor.fetchall()
                             borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=idmensaje)
-                            cursor.execute("DELETE FROM relaciones_id where Idevento=?;",(tomado.get_uid()),)
+                            cursor.execute(f"""DELETE FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
                             relacion.commit()
+                            admins=servicio_rest.GetAdmins()
+                            for admin in admins:
+                                id_chat = servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(admin))
+                                if id_chat==None:
+                                    id_chat='0'
+                                if id_chat != '0':
+                                    context.bot.send_message(chat_id=id_chat,text="Se ha hecho una propuesta de cambio para aprobar o denegar.")
+                                    mostrar_datos_evento("completo",tomado,id_chat,accion="aprobar_denegar")
                         else:
                             borrar_mensaje(id_chat=update.callback_query.message.chat_id,
                                            id_mensaje=update.callback_query.message.message_id)
-                            cursor.execute("DELETE FROM relaciones_id where Idevento=?;",(tomado.get_uid(),))
+                            cursor.execute(f"""DELETE  FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
                             relacion.commit()
+                            admins=servicio_rest.GetAdmins()
+                            for admin in admins:
+                                id_chat = servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(admin))
+                                if id_chat==None:
+                                    id_chat='0'
+                                if id_chat!='0':
+                                    mostrar_datos_evento("completo",tomado,id_chat,accion="aprobar_denegar")
                     else:
-                        cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (tomado.get_uid(),) )
+                        cursor.execute(f"""SELECT Idmessage FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
                         idmensaje = cursor.fetchall()
                         idmensaje = idmensaje[0][0]
                         editar_datos_evento(tomado, canalid, idmensaje, "tomar")
@@ -699,12 +811,12 @@ def retorno_tomar(update, context):
 
 
 @autenticar_retorno_admin
-def retorno_aceptar(update, context):
+def retorno_aprobar(update, context):
     """
     Función para recibir datos del administrador cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
     Toma una acción a realizar con un evento y su uid
 
-    La acción es aceptar, toma el evento en el calendario de propuestas, lo coloca en el lugar del calendario principal
+    La acción es aprobar, toma el evento en el calendario de propuestas, lo coloca en el lugar del calendario principal
     y lo borra del calendario de propuestas. Informa a los participantes
 
     Args:
@@ -720,42 +832,39 @@ def retorno_aceptar(update, context):
             logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
             accion, uid_evento = update.callback_query.data.split(';')
 
-            if accion == "aceptar":
+            if accion == "aprobar":
                 correo = servicio_rest.GetEmailPorID(
                     servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
-                tomado = tomar_evento(uid_evento, correo)
+                (borrados, asentados, evento) =cal_propuestas.asentar_cambios(uid_evento)
 
-                if isinstance(tomado, gestor_calendario.Evento):
-                    mostrar_datos_evento("completo", tomado, update.callback_query.from_user.id, "nada")
-                    if update.callback_query.message.chat_id != canalid:
+                if isinstance(evento, gestor_calendario.Evento):
+                    if cal_principal.set_evento(evento):
+                        cal_propuestas.borrar_evento(uid_evento)
                         borrar_mensaje(id_chat=update.callback_query.message.chat_id,
                                        id_mensaje=update.callback_query.message.message_id)
-                        cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (tomado.get_uid()), )
-                        idmensaje = cursor.fetchall()
-                        borrar_mensaje(id_chat=update.callback_query.message.chat_id, id_mensaje=idmensaje)
-                        cursor.execute("DELETE FROM relaciones_id where Idevento=?;", (tomado.get_uid()), )
-                        relacion.commit()
-                    else:
-                        borrar_mensaje(id_chat=update.callback_query.message.chat_id,
-                                       id_mensaje=update.callback_query.message.message_id)
-                        cursor.execute("DELETE FROM relaciones_id where Idevento=?;", (tomado.get_uid(),))
-                        relacion.commit()
+                        cadena_borrados=""
+                        cadena_asentados=""
+                        for borrado in borrados:
+                            cadena_borrados="\n- " + servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(borrado)) + cadena_borrados
+                        for asentado in asentados:
+                            cadena_asentados="\n- " + servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asentado)) + cadena_asentados
+                        texto_final="La propuesta de cambio del turno {} con fecha {} ha sido aprobada.\nSe han excluido a los usuarios:\n {} \n\nSe han incluido a los usuarios:\n {}"\
+                            .format(evento.get_summary(),evento.get_fecha_str(),cadena_borrados,cadena_asentados)
+                        context.bot.send_message(chat_id=update.callback_query.from_user.id,
+                                                 text=texto_final)
+
 
                 else:
-                    context.bot.send_message(chat_id=update.callback_query.from_user.id,
-                                             text="Ha habido un problema a la hora de inscribirse en el evento."
-                                                  "Póngase en contacto con un administrador")
+                    logging.getLogger(__name__).debug("El evento {} se ha borrado del calendario de propuestas".format(uid_evento))
 
             logging.getLogger(__name__).debug("UID del evento es:{} por el usuario {}".
                                               format(uid_evento, update.callback_query.from_user.id))
-        cursor.close()
-        relacion.close()
+
     except BaseException as e:
         logging.getLogger(__name__).error(
             "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
             format(sys._getframe(1).f_code.co_name, uid_evento, update.callback_query, e))
-        cursor.close()
-        relacion.close()
+
 
 
 @autenticar_retorno_admin
@@ -782,23 +891,19 @@ def retorno_denegar(update, context):
             if accion == "denegar":
                 correo = servicio_rest.GetEmailPorID(
                     servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
-                tomado = tomar_evento(uid_evento, correo)
+                evento=cal_propuestas.get_evento(uid_evento)
+                evento_original=cal_principal.get_evento(uid_evento)
+                denegado=cal_propuestas.borrar_evento(uid_evento)
 
-                if isinstance(tomado, gestor_calendario.Evento):
-                    mostrar_datos_evento("completo", tomado, update.callback_query.from_user.id, "nada")
-                    if update.callback_query.message.chat_id != canalid:
-                        borrar_mensaje(id_chat=update.callback_query.message.chat_id,
-                                       id_mensaje=update.callback_query.message.message_id)
-                        cursor.execute("SELECT Idmessage FROM relaciones_id where Idevento=?;", (tomado.get_uid()), )
-                        idmensaje = cursor.fetchall()
-                        borrar_mensaje(id_chat=update.callback_query.message.chat_id, id_mensaje=idmensaje)
-                        cursor.execute("DELETE FROM relaciones_id where Idevento=?;", (tomado.get_uid()), )
-                        relacion.commit()
-                    else:
-                        borrar_mensaje(id_chat=update.callback_query.message.chat_id,
-                                       id_mensaje=update.callback_query.message.message_id)
-                        cursor.execute("DELETE FROM relaciones_id where Idevento=?;", (tomado.get_uid(),))
-                        relacion.commit()
+                if denegado==True:
+                    texto_final="Se ha denegado con éxito el turno. El turno actual queda de la forma siguiente"
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text=texto_final)
+                    mostrar_datos_evento("completo", evento_original, update.callback_query.from_user.id, "nada")
+                    cal_propuestas.borrar_evento(uid_evento)
+                    borrar_mensaje(id_chat=update.callback_query.message.chat_id,
+                                   id_mensaje=update.callback_query.message.message_id)
+
+
 
                 else:
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,
@@ -807,8 +912,7 @@ def retorno_denegar(update, context):
 
             logging.getLogger(__name__).debug("UID del evento es:{} por el usuario {}".
                                               format(uid_evento, update.callback_query.from_user.id))
-        cursor.close()
-        relacion.close()
+
     except BaseException as e:
         logging.getLogger(__name__).error(
             "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
