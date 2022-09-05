@@ -432,7 +432,7 @@ class Calendario:
         return arrow.utcnow().to('Europe/Madrid').ceil('month').datetime
 
     @staticmethod
-    def ordenar_eventos(lista_eventos):
+    def ordenar_eventos(lista_eventos:list[Evento]):
         """
         Ordena por fecha de evento de atrás a delante la lista de eventos que se indica en la entrada
 
@@ -440,9 +440,9 @@ class Calendario:
             lista_eventos: Lista de eventos a ordenar por fecha
 
         Returns:
-            list(Evento): Lista ordenada de eventos
+            list[gestor_calendario.Evento]: Lista ordenada de eventos
         """
-        lista_ordenada = lista_eventos
+        lista_ordenada:list[Evento] = lista_eventos
         try:
             lista_ordenada = sorted(lista_eventos, key=lambda x: x.get_fecha_str())
         except BaseException as exception:
@@ -462,7 +462,7 @@ class Calendario:
             rol(Por defecto ""): Rol del asistente. Se utiliza para buscar eventos con cierto rol del participante
 
         Returns:
-            list(gestor_calendario.Evento): Lista de Evento
+            list[gestor_calendario.Evento]: Lista de Evento
         """
         lista_eventos = []
         lista_eventos_aux = []
@@ -687,11 +687,12 @@ class Calendario:
         try:
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
-                if evento_buscado.get_comprobar_asistente(correo_usuario,rol="NON-PARTICIPANT") or evento_buscado.get_sitios_libres() > 0:
+                if evento_buscado.get_comprobar_asistente(correo_usuario)!=True and evento_buscado.get_sitios_libres() > 0:
                     evento_buscado.set_asistente(correo_usuario, rol="NON-PARTICIPANT")
                     evento_tomado = self.set_evento(evento_buscado)
                     if evento_tomado == True:
                         return evento_buscado
+
         except Exception as e:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return None

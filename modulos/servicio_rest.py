@@ -154,6 +154,7 @@ def GetRolesPorEmail(mail):
 def GetidTelPoridREST(id):
     respuesta = None
     nombre = None
+    idTel='0'
     try:
         respuesta = requests.get(url_getIDtelporIDrest,
                                  auth=HTTPBasicAuth(usuario, password),
