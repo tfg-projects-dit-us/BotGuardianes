@@ -57,7 +57,8 @@ if __name__ == '__main__':
         token_bot=tokenbot,
         cal_prim=cal_principal,
         cal_prop=cal_propuestas,
-        canal_id=configuracion.configfile['telegram']['canal_id']
+        canal_id=configuracion.configfile['telegram']['canal_id'],
+        canal_id_admin=configuracion.configfile['telegram']['canal_id_admin']
     )
     logging.getLogger( __name__ ).debug('Cargado token de Telegram. TokenID= ' + tokenbot)
     print("Calendarios cargados. Iniciado correctamente")

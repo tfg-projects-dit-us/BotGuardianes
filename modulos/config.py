@@ -5,7 +5,7 @@ import datetime
 import logging
 import requests
 import sys
-
+import sqlite3
 
 class config:
     """
@@ -27,7 +27,7 @@ class config:
         self.directorio = directorio
         self.cargar_configuracion_lectura()
         self.crear_log()
-
+        self.crear_db()
     def cargar_configuracion_lectura(self, directorio=None):
         locale.setlocale(locale.LC_ALL, 'es_ES')
         try:
@@ -65,3 +65,15 @@ class config:
                 level=logging.WARNING)
 
         logging.getLogger( __name__ ).debug(str(self.configfile))
+
+    def crear_db(self):
+
+        connection=sqlite3.connect('./relacionesids.sqlite')
+        c=connection.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS relaciones_id (
+                Idevento TEXT NOT NULL,
+                Idmessage TEXT NOT NULL);
+                ''')
+        connection.commit()
+        c.close()
+        connection.close()
