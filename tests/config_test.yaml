@@ -1,0 +1,21 @@
+calendarios:
+    url_servidor: http://URL-SERVIDOR
+    url_propuestas: propuestas
+    url_definitivos: principal
+    usuario: usuario
+    contrasena: usuario
+telegram:
+    token_bot: cadenaalfanumerica2245566
+    canal_id: -1001111111111
+    canal_id_admin: -1002222222222
+log:
+    level: debug
+REST:
+    url_insertartelegramID: http://URL-SERVIDOR-REST:8080/guardians/api/doctors/telegramID
+    url_getIDporemail: http://URL-SERVIDOR-REST:8080/guardians/api/doctors/idDoctor
+    url_getnombreporID: http://URL-SERVIDOR-REST:8080/guardians/api/doctors
+    url_getIDrestporIDtel: http://URL-SERVIDOR-REST:8080/guardians/api/doctors/idDoctor
+    url_getrol: http://URL-SERVIDOR-REST:8080/guardians/api/doctors/rol
+    url_getTelegramID: http://URL-SERVIDOR-REST:8080/guardians/api/doctors/telegramID
+    contrasena: password
+    usuario: usuario

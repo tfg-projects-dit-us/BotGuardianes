@@ -1,3 +1,22 @@
+"""
+Módulo para agregar manejo del servicio REST para obtener datos del servicio Guardianes
+
+Contiene las variables de módulo:
+
+- `url_inserta`: Contiene la URL para insertar la ID de telegram utilizando la ID de usuario en la BBDD del servicio REST
+- `url_getID`: Contiene la URL para obtener la ID del doctor en la BBDD del servicio REST a partir del email
+- `url_getnombre`: Contiene la URL para obtener el nombre y apellido del doctor a partir de la ID del doctor en la BBDD del servicio REST
+- `url_getIDrestporIDtel`: Contiene la URL para obtener la ID del doctor en la BBDD del servicio REST a partir de la ID de usuario de Telegram
+- `url_getroles`: Contiene la URL para obtener los roles de un doctor a partir del correo del doctor
+- `url_getIDtelporIDrest`: Contiene la URL para obtener la ID de usuario de Telegram del doctor a partir de la ID en la BBDD del servicio REST
+- `usuario`: Usuario para el servicio REST
+- `password`: Password para el servicio REST
+
+Estas variables son con acceso de lectura desde cualquier función del módulo.
+Para poder escribir en ellas, es necesario declararla como `global` dentro de la función
+
+"""
+
 import requests
 import logging
 import sys
@@ -5,17 +24,31 @@ import ast
 from requests.auth import HTTPBasicAuth
 
 
-url_inserta=None
-url_getID=None
-url_getnombre=None
-url_getIDrestporIDtel=None
-url_getroles=None
-url_getIDtelporIDrest=None
-usuario=None
-password=None
-def start(user=None, contrasena=None, inserta_id_tel_por_id_rest=None, get_id_por_email=None, get_nombre_por_id_rest=None, get_id_rest_por_id_tel=None, get_rol_por_email=None,get_id_tel_por_id_rest=None):
-    #La palabra clave global sirve para poder modificar la variable que está fuera del ámbito de esta variable dentro del
-    #módulo, no accesible fuera del módulo sin llamar al módulo en sí
+url_inserta             :str =None
+url_getID               :str =None
+url_getnombre           :str =None
+url_getIDrestporIDtel   :str =None
+url_getroles            :str =None
+url_getIDtelporIDrest   :str =None
+usuario                 :str =None
+password                :str =None
+def start(user:str=None, contrasena:str=None, inserta_id_tel_por_id_rest:str=None, get_id_por_email:str=None,
+          get_nombre_por_id_rest:str=None,get_id_rest_por_id_tel:str=None,
+          get_rol_por_email:str=None,get_id_tel_por_id_rest:str=None):
+    """
+    Función para inicializar  el módulo. Rellena las urls de acceso a la API REST y las credenciales.
+
+    Args:
+        user: Usuario para acceder a la API REST
+        contrasena: Password para acceder a la API REST
+        inserta_id_tel_por_id_rest: URL para insertar la ID de telegram en la BBDD
+        get_id_por_email: URL para obtener la ID del servicio REST a partir del email
+        get_nombre_por_id_rest: URL para obtener el nombre del doctor a partir de la ID del servicio REST
+        get_id_rest_por_id_tel: URL para obtener la ID del servicio REST a partir de la ID de Telegram
+        get_rol_por_email:  URL para obtener los roles de un doctor a partir de su email
+        get_id_tel_por_id_rest:  URL para obtener la ID de Telegram a partir de la ID del servicio REST
+    """
+
     global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel, url_getroles,url_getIDtelporIDrest
     url_inserta=inserta_id_tel_por_id_rest
     url_getID= get_id_por_email
@@ -34,7 +67,17 @@ def start(user=None, contrasena=None, inserta_id_tel_por_id_rest=None, get_id_po
                   " PASSWORD: " + password
                   )
 
-def InsertaTelegramID(idusuario,chatid):
+def InsertaTelegramID(idusuario:str|int,chatid:str|int):
+    """
+    Inserta la ID de telegram del usuario, utilizando la ID REST del mismo
+
+    Args:
+        idusuario: ID del usuario en el servicio REST
+        chatid: ID del usuario en Telegram
+
+    Returns:
+        Devuelve el mensaje de ID de Telegram actualizado si se completa, o None si hay un fallo.
+    """
     respuesta=None
     try:
         respuesta=requests.put(url_inserta+ '/' + idusuario,
@@ -50,7 +93,16 @@ def InsertaTelegramID(idusuario,chatid):
 
     if respuesta.status_code ==200:
         return respuesta.text
-def GetIDPorEmail(email):
+def GetIDPorEmail(email:str):
+    """
+    Obteiene la ID del usuario en el servicio REST a partir de su correo electrónico
+
+    Args:
+        email: Correo electrónico del usuario
+
+    Returns:
+        Devuelve la cadena `Email not found` si no encuentra el correo, o la ID en el servicio REST si lo encontró
+    """
     try:
         respuesta=requests.get(url_getID,
                                        auth=HTTPBasicAuth(
@@ -70,7 +122,16 @@ def GetIDPorEmail(email):
         return "Email not found"
 
 
-def GetNombrePorID(id):
+def GetNombrePorID(id:str|int):
+    """
+    Obtiene el nombre y apellido de un usuario en el servicio REST a partir de su ID
+
+    Args:
+        id: ID del usuario en el servicio REST
+
+    Returns:
+        El nombre y apellido en caso de encontrar al doctor o el mensaje "Email not found"
+    """
     respuesta=None
     nombre=None
     try:
@@ -87,7 +148,16 @@ def GetNombrePorID(id):
         return nombre
     if "Could not fing a doctor" in respuesta.text:
         return "Email not found"
-def GetidRESTPorIDTel(id):
+def GetidRESTPorIDTel(id:str|int):
+    """
+    Obtiene la ID del servicio REST de un usuario a partir de su ID en Telegram
+
+    Args:
+        id: ID de Telegram del usuario
+
+    Returns:
+        Obtiene la ID del usuario en el servicio REST o el mensaje "Email not found"
+    """
     respuesta=None
     nombre=None
     try:
@@ -106,7 +176,16 @@ def GetidRESTPorIDTel(id):
     if "Could not fing a doctor" in respuesta.text:
         return "Email not found"
 
-def GetEmailPorID(id):
+def GetEmailPorID(id:str|int):
+    """
+    Obtiene el correo de un usuario a partir de su ID del servicio REST
+
+    Args:
+        id: ID del servicio REST del usuario
+
+    Returns:
+        Correo del usuario o None en caso contrario
+    """
     respuesta=None
     email=None
     try:
@@ -123,7 +202,16 @@ def GetEmailPorID(id):
 
     return email
 
-def GetRolesPorEmail(mail):
+def GetRolesPorEmail(mail:str):
+    """
+    Obtiene los roles de un usuario
+
+    Args:
+        mail: Correo del usuario
+
+    Returns:
+        Lista de roles que tenga el usuario, o lista vacía si no los encuentra.
+    """
     respuesta = None
     roles = []
     try:
@@ -151,7 +239,16 @@ def GetRolesPorEmail(mail):
     finally:
         return roles
 
-def GetidTelPoridREST(id):
+def GetidTelPoridREST(id:str|int):
+    """
+    Obtiene la ID de telegram de un usuario a partir de su ID del servicio REST
+
+    Args:
+        id: ID de servicio REST de un usuario
+
+    Returns:
+        La ID de Telegram de un usuario, o "Email not found" en caso de no existir.
+    """
     respuesta = None
     nombre = None
     idTel='0'
@@ -173,6 +270,12 @@ def GetidTelPoridREST(id):
 
 
 def GetAdmins():
+    """
+    Obtiene una lista de administradores en la BBDD del servicio REST
+
+    Returns:
+        Lista con los correos de los administradores, o lista vacía si no los encuentra.
+    """
     respuesta = None
     admines=[]
     try:

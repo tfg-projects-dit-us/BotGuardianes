@@ -5,4 +5,10 @@ arrow~=0.14.7
 ics~=0.7
 requests~=2.27.1
 caldav~=0.9.1
-icalendar
+icalendar~=4.0.9
+unipath~=1.1
+pytest
+pytest-check
+mkdocs
+mkdocstrings[python]
+mkdocs-material

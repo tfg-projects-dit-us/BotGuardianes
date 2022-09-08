@@ -21,3 +21,6 @@ gradle-app.setting
 /BotGuardianes.pyproj
 /modulos/__pycache__
 /.vs/
+/tests/.pytest_cache/
+/site/
+/.pytest_cache/

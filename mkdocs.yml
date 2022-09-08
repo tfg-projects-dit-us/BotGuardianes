@@ -1,0 +1,14 @@
+site_name: BotGuardianes
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - Principal: index.md
+  - telegram_tools: telegram_tools.md
+  - servicio_rest: servicio_rest.md
+  - gestor_calendario: gestor_calendario.md
+  - config: config.md

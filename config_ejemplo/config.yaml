@@ -1,14 +1,21 @@
 calendarios:
-    url_propuestas: URL
-    url_definitivos: URL 
+    url_servidor: http://URL
+    url_propuestas: nombre_calendario
+    url_definitivos: nombre_calendario
     usuario: usuario
     contrasena: contrasena
 telegram:
     token_bot: IDTOKENBOT
+    canal_id: CANALID
+    canal_id_admin: CANALID
 log:
     level: warning
 REST:
     url_insertartelegramID: URL
     url_getIDporemail: URL
+    url_getnombreporID: URL
+    url_getIDrestporIDtel: URL
+    url_getrol: URL
+    url_getTelegramID: URL
     contrasena: contrasena
-    usuario: USUARIO
+    usuario: usuario

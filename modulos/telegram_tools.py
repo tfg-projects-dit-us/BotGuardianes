@@ -153,7 +153,7 @@ def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None,canal_id_adm
     cal_principal=cal_prim
     cal_propuestas=cal_prop
     canalid=canal_id
-    canalid_admin=canalid_admin
+    canalid_admin=canal_id_admin
     tokenbot = token_bot
     bot = telegram.Bot(token=token_bot)
 
@@ -288,15 +288,29 @@ def editar_datos_evento( evento:gestor_calendario.Evento, id_chat:str, id_mensaj
     """
     reply_markup = []
     mensaje = None
+    if accion == "cancelar":
+        texto = "Cancelar propuesta de cambio"
+    if accion == "tomar":
+        texto = "Pedir esta actividad cedida"
+    if accion == "ceder":
+        texto = "Ofrecer esta actividad"
+    if accion=="aprobar_denegar":
+        texto= "Aprobar este cambio de actividad"
+    if accion=="permutar":
+        texto="Pedir esta actividad para intercambio"
+    if accion=="rechazar":
+        texto="Rechazar intercambio"
+    if accion=="escoger":
+        texto="Escoger esta actividad para intercambio"
     boton_callback = [[telegram.InlineKeyboardButton
-        (
-        text="{} - {}".format(evento.get_summary(), evento.get_fecha_str()),
-        callback_data="{};{}".format(accion, evento.get_uid())
-    )
-    ]]
+                (
+                    text="{}".format(texto),
+                    callback_data="{};{}".format(accion,evento.get_uid())
+                )
+                ]]
 
-    cadena = "<b>{}</b> en fecha: {}\nSitios libres: {}".format(evento.get_summary(), evento.get_fecha_str(),
-                                                                evento.get_sitios_libres())
+    cadena = "<b>{}</b>\nFecha: {}\nSitios libres: {}".format(evento.get_summary(), evento.get_fecha_str(),
+                                                              evento.get_sitios_libres())
     if accion != "nada":
         reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
         mensaje = bot.editMessageText(chat_id=id_chat,message_id=id_mensaje,text=cadena,reply_markup=reply_markup, parse_mode="HTML")
@@ -326,13 +340,13 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
     if accion == "cancelar":
         texto = "Cancelar propuesta de cambio"
     if accion == "tomar":
-        texto = "Pedir este turno"
+        texto = "Pedir esta actividad cedida"
     if accion == "ceder":
-        texto = "Ofrecer este turno"
+        texto = "Ofrecer esta actividad"
     if accion=="aprobar_denegar":
-        texto= "Aprobar este cambio de turno"
-    if accion=="intercambiar":
-        texto="Intercambiar este turno"
+        texto= "Aprobar este cambio de actividad"
+    if accion=="permutar":
+        texto="Pedir esta actividad para intercambio"
 
     if modo=="resumen":
         boton_callback = [[telegram.InlineKeyboardButton
@@ -361,13 +375,13 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
                     nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
                     cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre,asistente)
         if evento.get_cuenta_ofertantes()>0:
-            cadena += "\n<i>Ofertantes del turno</i>:\n"
+            cadena += "\n<i>Ofertantes de la guardia</i>:\n"
             for asistente in evento.get_asistentes():
                 if evento.get_rol_asistente(asistente)== "OPT-PARTICIPANT":
                     nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
                     cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre,asistente)
         if evento.get_cuenta_demandantes() > 0:
-            cadena += "\n<i>Demandantes del turno</i>:\n"
+            cadena += "\n<i>Demandantes de la guardia</i>:\n"
             for asistente in evento.get_asistentes():
                 if evento.get_rol_asistente(asistente) == "NON-PARTICIPANT":
                     nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
@@ -384,11 +398,11 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
             boton_callback = [
                 [
                     telegram.InlineKeyboardButton(
-                        text="Aprobar este cambio de turno", callback_data="{};{}".format("aprobar", evento.get_uid())
+                        text="Aprobar este cambio de guardia", callback_data="{};{}".format("aprobar", evento.get_uid())
                     ),
 
                     telegram.InlineKeyboardButton(
-                        text="Denegar este cambio de turno", callback_data="{};{}".format("denegar", evento.get_uid())
+                        text="Denegar este cambio de guardia", callback_data="{};{}".format("denegar", evento.get_uid())
                     )
                 ]]
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
@@ -398,11 +412,11 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
             boton_callback = [
                 [
                     telegram.InlineKeyboardButton(
-                        text="Ceder este turno", callback_data="{};{}".format("ceder", evento.get_uid())
+                        text="Ceder esta guardia", callback_data="{};{}".format("ceder", evento.get_uid())
                     ),
 
                     telegram.InlineKeyboardButton(
-                        text="Intercambiar este turno", callback_data="{};{}".format("intercambiar", evento.get_uid())
+                        text="Intercambiar esta guardia", callback_data="{};{}".format("intercambiar", evento.get_uid())
                     )
                 ]]
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
@@ -439,9 +453,16 @@ def guardias_pendientes(update, context):
             logging.getLogger(__name__).debug("No hay guardias pendientes de ser aprobadas o denegadas")
         else:
             for e in lista_eventos_ofertados:
-                mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
+                if e.get_sitios_libres()>0:
+                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
+                else:
+                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="nada")
+
             for e in lista_eventos_demandados:
-                mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
+                if e.get_sitios_libres()>0:
+                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
+                else:
+                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="nada")
 
             logging.getLogger(__name__).debug(cadena)
 
@@ -927,9 +948,11 @@ def retorno_tomar(update, context):
 
             if accion=="tomar":
                 correo = servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
-                tomado=tomar_evento(uid_evento,correo)
-                evento=cal_propuestas.get_evento(uid_evento)
-                if evento.get_comprobar_asistente(correo):
+
+
+                evento=cal_principal.get_evento(uid_evento)
+                if evento.get_comprobar_asistente(correo) != True:
+                    tomado = tomar_evento(uid_evento, correo)
                     if isinstance(tomado,gestor_calendario.Evento):
                         context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Evento en el que se ha inscrito")
                         mostrar_datos_evento("completo", tomado, update.callback_query.from_user.id, "nada")
