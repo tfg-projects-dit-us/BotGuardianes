@@ -29,7 +29,7 @@ class config:
         self.crear_log()
         self.crear_db()
     def cargar_configuracion_lectura(self, directorio=None):
-        locale.setlocale(locale.LC_ALL, 'es_ES')
+        locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
         try:
             if (directorio == None and self.directorio != None):
                 with open(self.directorio, 'r') as configuracion:
@@ -46,8 +46,8 @@ class config:
         if (config != None):
             self.configfile = config
 
-        if not os.path.exists('log'):
-            os.makedirs('log')
+        if not os.path.exists('./data/log'):
+            os.makedirs('./data/log')
             logging.getLogger( __name__ ).info("Directorio log creado")
         # Comprobamos si está el nivel
         if 'level' in self.configfile['log']:
@@ -55,12 +55,12 @@ class config:
             if not isinstance(nivel_log_num, int):
                 raise ValueError('Nivel de log invalido: %s' % self.configfile['log']['level'])
             logging.basicConfig(
-                filename='log/botguardianes-' + str(datetime.datetime.today().strftime('%Y.%m.%d')) + '.log',
+                filename='data/log/botguardianes-' + str(datetime.datetime.today().strftime('%Y.%m.%d')) + '.log',
                 filemode='a', encoding='utf-8', format='[%(asctime)s] - ·%(name)s· - %(levelname)s - %(message)s',
                 level=nivel_log_num)
         else:
             logging.basicConfig(
-                filename='log/botguardianes-' + str(datetime.datetime.today().strftime('%Y.%m.%d')) + '.log',
+                filename='data/log/botguardianes-' + str(datetime.datetime.today().strftime('%Y.%m.%d')) + '.log',
                 filemode='a', enconding='utf-8', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                 level=logging.WARNING)
 
@@ -68,7 +68,7 @@ class config:
 
     def crear_db(self):
 
-        connection=sqlite3.connect('./relacionesids.sqlite')
+        connection=sqlite3.connect(self.configfile['sqlite']['path'])
         c=connection.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS relaciones_id (
                 Idevento TEXT NOT NULL,

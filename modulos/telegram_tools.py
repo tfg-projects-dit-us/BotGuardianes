@@ -35,10 +35,12 @@ cal_principal:  gestor_calendario.Calendario=None
 cal_propuestas: gestor_calendario.Calendario=None
 canalid:        str                         =None
 canalid_admin:  str                         =None
+path_sqlite3:   str                         =""
 
 def autenticar(func):
     """
     Método para autenticar usuario al usar las funciones. Verifica si el usuario está inscrito en el servicio REST
+
     Se utiliza como un decorador
 
     Args:
@@ -138,7 +140,7 @@ def autenticar_admin(func):
                                              "Por favor, regístrese con la función /start")
     return wrapper
 
-def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None,canal_id_admin=None):
+def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None,canal_id_admin=None,path_sqlite=None):
     """
     Función de inicialización del bot de Telegram
 
@@ -149,12 +151,13 @@ def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None,canal_id_adm
         canal_id: Id para el canal de publicación de guardias.
 
     """
-    global tokenbot,bot,cal_principal,cal_propuestas,canalid,canalid_admin
+    global tokenbot,bot,cal_principal,cal_propuestas,canalid,canalid_admin, path_sqlite3
     cal_principal=cal_prim
     cal_propuestas=cal_prop
     canalid=canal_id
     canalid_admin=canal_id_admin
     tokenbot = token_bot
+    path_sqlite3=path_sqlite
     bot = telegram.Bot(token=token_bot)
 
 
@@ -773,7 +776,7 @@ def retorno_ceder(update, context):
 
     """
     global cal_principal, cal_propuestas,bot,canalid
-    relacion=sqlite3.connect('./relacionesids.sqlite')
+    relacion=sqlite3.connect(path_sqlite3)
     cursor=relacion.cursor()
 
     try:
@@ -824,7 +827,7 @@ def retorno_intercambiar(update, context):
 
     """
     global cal_principal, cal_propuestas,bot,canalid
-    relacion=sqlite3.connect('./relacionesids.sqlite')
+    relacion=sqlite3.connect(path_sqlite3)
     cursor=relacion.cursor()
 
     try:
@@ -876,7 +879,7 @@ def retorno_cancelar(update, context):
 
     """
     global cal_principal, cal_propuestas,bot,canalid
-    relacion=sqlite3.connect('./relacionesids.sqlite')
+    relacion=sqlite3.connect(path_sqlite3)
     cursor=relacion.cursor()
 
     try:
@@ -938,7 +941,7 @@ def retorno_tomar(update, context):
 
     """
     global cal_principal, cal_propuestas,bot,canalid,canalid_admin
-    relacion=sqlite3.connect('./relacionesids.sqlite')
+    relacion=sqlite3.connect(path_sqlite3)
     cursor=relacion.cursor()
     idmensaje=None
     try:

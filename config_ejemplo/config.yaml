@@ -1,21 +1,23 @@
 calendarios:
-    url_servidor: http://URL
-    url_propuestas: nombre_calendario
-    url_definitivos: nombre_calendario
-    usuario: usuario
-    contrasena: contrasena
+    url_servidor: $URL_SERVIDOR
+    url_propuestas: $CAL_PROPUESTAS
+    url_definitivos: $CAL_PRINCIPAL
+    usuario: $USER_CALENDAR
+    contrasena: $PASS_CALENDAR
 telegram:
-    token_bot: IDTOKENBOT
-    canal_id: CANALID
-    canal_id_admin: CANALID
+    token_bot: $TOKEN_BOT
+    canal_id: $ID_CANAL
+    canal_id_admin: $ID_CANAL_ADMIN
 log:
-    level: warning
+    level: $LOG_LEVEL
+sqlite:
+    path: $PATH_SQLITE
 REST:
-    url_insertartelegramID: URL
-    url_getIDporemail: URL
-    url_getnombreporID: URL
-    url_getIDrestporIDtel: URL
-    url_getrol: URL
-    url_getTelegramID: URL
-    contrasena: contrasena
-    usuario: usuario
+    url_insertartelegramID: $REST_INSERTA_TELEGRAM_ID
+    url_getIDporemail: $REST_GET_ID_POR_EMAIL
+    url_getnombreporID: $REST_GET_NOMBRE_POR_ID
+    url_getIDrestporIDtel: $REST_GET_ID_REST_POR_ID_TEL
+    url_getrol: $REST_GET_ROL
+    url_getTelegramID: $REST_GET_TELEGRAM_ID
+    contrasena: $REST_PASSWORD
+    usuario: $REST_USUARIO

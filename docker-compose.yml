@@ -1,0 +1,29 @@
+version: '3'
+services:
+  botguardianes:
+    image: luimarpen/botguardianes
+    restart: always
+    volumes:
+      - botguardianes:/BotGuardianes/data
+    environment:
+      - URL_SERVIDOR= URL
+      - CAL_PROPUESTAS=propuestas
+      - CAL_PRINCIPAL=principal
+      - USER_CALENDAR=usuario
+      - PASS_CALENDAR= pass
+      - TOKEN_BOT=token
+      - ID_CANAL=-100ID
+      - ID_CANAL_ADMIN=-100ID
+      - LOG_LEVEL=warning
+      - PATH_SQLITE=./data/relaciones_id.sqlite
+      - REST_INSERTA_TELEGRAM_ID=URI
+      - REST_GET_ID_POR_EMAIL=URI
+      - REST_GET_NOMBRE_POR_ID=URI
+      - REST_GET_ID_REST_POR_ID_TEL=URI
+      - REST_GET_ROL=URI
+      - REST_GET_TELEGRAM_ID=URI
+      - REST_PASSWORD=Password
+      - REST_USUARIO= usuario
+    command: /bin/bash -c "mkdir -p /BotGuardianes/data/config && envsubst < /BotGuardianes/config_ejemplo/config.yaml > /BotGuardianes/data/config/config.yaml && python3.10 MainBot.py"
+volumes:
+  botguardianes:

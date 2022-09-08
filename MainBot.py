@@ -18,7 +18,7 @@ from modulos import gestor_calendario
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Bot de telegram para gestion de guardias hospitalarias')
-    parser.add_argument('--config', help="Fichero de configuracion (Por defecto en config/config.yaml)", type=str, default="config/config.yaml")
+    parser.add_argument('--config', help="Fichero de configuracion (Por defecto en ./data/config/config.yaml)", type=str, default="./data/config/config.yaml")
     args=parser.parse_args()
 
     configuracion = config(directorio=args.config)
@@ -58,7 +58,8 @@ if __name__ == '__main__':
         cal_prim=cal_principal,
         cal_prop=cal_propuestas,
         canal_id=configuracion.configfile['telegram']['canal_id'],
-        canal_id_admin=configuracion.configfile['telegram']['canal_id_admin']
+        canal_id_admin=configuracion.configfile['telegram']['canal_id_admin'],
+        path_sqlite=configuracion.configfile['sqlite']['path']
     )
     logging.getLogger( __name__ ).debug('Cargado token de Telegram. TokenID= ' + tokenbot)
     print("Calendarios cargados. Iniciado correctamente")

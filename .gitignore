@@ -15,7 +15,7 @@ gradle-app.setting
 /.vscode
 /.vs
 /calendario.ics
-/config
+/data/config
 /log
 /librerias/__pycache__
 /BotGuardianes.pyproj
@@ -24,3 +24,4 @@ gradle-app.setting
 /tests/.pytest_cache/
 /site/
 /.pytest_cache/
+/data/
