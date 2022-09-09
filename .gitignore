@@ -25,3 +25,4 @@ gradle-app.setting
 /site/
 /.pytest_cache/
 /data/
+/tests/data/

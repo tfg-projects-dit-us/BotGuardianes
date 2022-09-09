@@ -13,7 +13,7 @@ class config:
 
     Attributes:
         configfile: Diccionario conteniendo la configuración en un fichero yaml
-        directorio: Ruta donde se encuentra el fichero de configuración. Por defecto en ./config/config.yaml
+        directorio: Ruta donde se encuentra el fichero de configuración. Por defecto en ./data/config/config.yaml
     """
 
 

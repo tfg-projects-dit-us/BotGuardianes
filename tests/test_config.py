@@ -23,6 +23,9 @@ def test_cargar_config():
         "canal_id": -1001111111111,
         "canal_id_admin": -1002222222222
     }
+    datos_sqlite={
+        "path":"./data/relaciones_id.sqlite"
+    }
     datos_REST = {
         "url_insertartelegramID": "http://URL-SERVIDOR-REST:8080/guardians/api/doctors/telegramID",
         "url_getIDporemail": "http://URL-SERVIDOR-REST:8080/guardians/api/doctors/idDoctor",

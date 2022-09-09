@@ -10,6 +10,8 @@ telegram:
     canal_id_admin: -1002222222222
 log:
     level: debug
+sqlite:
+    path: './data/relaciones_id.sqlite'
 REST:
     url_insertartelegramID: http://URL-SERVIDOR-REST:8080/guardians/api/doctors/telegramID
     url_getIDporemail: http://URL-SERVIDOR-REST:8080/guardians/api/doctors/idDoctor
