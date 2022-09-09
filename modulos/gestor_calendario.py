@@ -29,10 +29,10 @@ import requests
 import caldav
 
 
-cliente=None
+cliente:caldav.DAVClient=None
 
 
-def start(url_servicio, usuario=None, contrasena=None):
+def start(url_servicio:str, usuario:str=None, contrasena:str=None):
     """
     Método de módulo para cargar el cliente caldav en una variable de método
 
@@ -55,6 +55,7 @@ def start(url_servicio, usuario=None, contrasena=None):
 class Evento:
     """
     Clase que envuelve a un objeto de clase caldav.Event.
+
     Genera métodos que permitan operar con este objeto con más facilidad
 
 
@@ -64,26 +65,27 @@ class Evento:
     rol y tipo de asistente. Los envuelve en listas, pero con esta clase vamos a convertirlo en un diccionario
     de diccionarios.
 
-    Los roles del asistente son:
-        - REQ-PARTICIPANT: Significa asistente obligatorio al calendario
-        - OPT-PARTICIPANT: Empleado que pretende ceder este turno
-        - NON-PARTICIPANT: Empleado que quiere tomar este turno
-    Los tipos del asistente son (Aun sin uso):
-        - INDIVIDUAL: El tipo por defecto
-        - GROUP
-        - RESOURCE
-        - ROOM
+    ```
 
-    Examples:
+    Los roles del asistente son:
+        REQ-PARTICIPANT: Significa asistente obligatorio al calendario
+        OPT-PARTICIPANT: Empleado que pretende ceder este turno
+        NON-PARTICIPANT: Empleado que quiere tomar este turno
+
+    Los tipos del asistente son:
+        INDIVIDUAL: Se usa para indicar cesiones.
+        GROUP: Se usa para indicar intercambio.
+        RESOURCE: Sin uso.
+        ROOM: Sin uso.
+
+    Ejemplos:
+
 
         {
-
         correo1: {rol: ROL_DEL_ASISTENTE,tipo: TIPO_DEL_ASISTENTE},
-
         correo2: {rol: ROL_DEL_ASISTENTE,tipo: TIPO_DEL_ASISTENTE}
-
         }
-
+    ```
 
 
     """

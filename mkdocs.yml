@@ -1,10 +1,15 @@
 site_name: BotGuardianes
+repo_url: https://github.com/tfg-projects-dit-us/BotGuardianes
 
 theme:
   name: "material"
 
 plugins:
-  - mkdocstrings
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
 
 nav:
   - Principal: index.md

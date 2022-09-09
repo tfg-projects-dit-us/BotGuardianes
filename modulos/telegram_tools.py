@@ -35,9 +35,9 @@ cal_principal:  gestor_calendario.Calendario=None
 cal_propuestas: gestor_calendario.Calendario=None
 canalid:        str                         =None
 canalid_admin:  str                         =None
-path_sqlite3:   str                         =""
+path_sqlite3:   str                         =None
 
-def autenticar(func):
+def autenticar(func:function):
     """
     Método para autenticar usuario al usar las funciones. Verifica si el usuario está inscrito en el servicio REST
 
@@ -61,7 +61,7 @@ def autenticar(func):
     return wrapper
 
 
-def autenticar_retorno(func):
+def autenticar_retorno(func:function):
     """
     Método para autenticar usuario al usar el retorno. Verifica si el usuario está inscrito en el servicio REST
     Se utiliza como un decorador
@@ -83,7 +83,7 @@ def autenticar_retorno(func):
 
     return wrapper
 
-def autenticar_retorno_admin(func):
+def autenticar_retorno_admin(func:function):
     """
     Método para autenticar usuario al usar el retorno. Verifica si el usuario está inscrito en el servicio REST
     Se utiliza como un decorador
@@ -112,7 +112,7 @@ def autenticar_retorno_admin(func):
     return wrapper
 
 
-def autenticar_admin(func):
+def autenticar_admin(func:function):
     """
     Método para autenticar usuario al usar las funciones del bot. Verifica si es un administrador.
     Se utiliza como un decorador
@@ -140,7 +140,7 @@ def autenticar_admin(func):
                                              "Por favor, regístrese con la función /start")
     return wrapper
 
-def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None,canal_id_admin=None,path_sqlite=None):
+def start(token_bot:str, cal_prim:str,cal_prop:str,canal_id:str,canal_id_admin:str,path_sqlite:str):
     """
     Función de inicialización del bot de Telegram
 
@@ -162,7 +162,7 @@ def start(token_bot=None, cal_prim=None,cal_prop=None,canal_id=None,canal_id_adm
 
 
 
-def registro_paso1(update, context):
+def registro_paso1(update:telegram.Update, context:telegram.ext.CallbackContext)-> int:
     """
     Primer paso para registrar ID del usuario en Telegram en el servicio REST de Guardianes.
 
@@ -178,7 +178,7 @@ def registro_paso1(update, context):
                              reply_markup=telegram.ForceReply())
     return 1
 
-def registro_paso2(update, context):
+def registro_paso2(update:telegram.Update, context:telegram.ext.CallbackContext)->int:
     """
     Segundo paso para registrar ID del usuario en Telegram en el servicio REST de Guardianes.
 
@@ -232,7 +232,7 @@ def registro_paso2(update, context):
         return 1
 
 @autenticar
-def botones(update, context):
+def botones(update:telegram.Update, context:telegram.ext.CallbackContext):
     """
     Función para mostrar los botones en el chat que ejecutarán las funciones para el usuario
 
@@ -286,8 +286,7 @@ def editar_datos_evento( evento:gestor_calendario.Evento, id_chat:str, id_mensaj
         evento: Evento que se va a actualizar
         id_chat: Identificador del chat donde se edita el mensaje
         id_mensaje: Identificador del mensaje que se va a editar
-        accion: Acción que se incluye en el botón que está debajo de la publicación del mensaje,
-        que luego interacciona con los retornos
+        accion: Acción que se incluye en el botón que está debajo de la publicación del mensaje, que luego interacciona con los retornos
     """
     reply_markup = []
     mensaje = None
@@ -320,9 +319,11 @@ def editar_datos_evento( evento:gestor_calendario.Evento, id_chat:str, id_mensaj
 
 
 
-def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,accion:str="nada"):
+def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,accion:str="nada")->str:
     """
-    Función para presentar datos de un evento en un chat de telegram
+    Función para presentar datos de un evento en un chat de telegram.
+
+    Envía una mensaje al chat indicado por id_chat con los datos del evento y los botones contextuales si procede.
 
     Args:
         modo: Modo en el que se presenta el evento:
@@ -336,9 +337,11 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         id_chat: Identificador del chat donde se van a mostrar los datos del evento
         accion: Accion que se pone en el mensaje de retorno cuando se pulsa un botón de un mensaje con un evento.
                 Si la acción es nada, no se pone un botón
+    Returns:
+        Devuelve la id del mensaje enviado
     """
     reply_markup=[]
-    mensaje=None
+    mensaje:telegram.Message=None
     texto = ""
     if accion == "cancelar":
         texto = "Cancelar propuesta de cambio"
@@ -431,7 +434,7 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
 
 
 @autenticar
-def guardias_pendientes(update, context):
+def guardias_pendientes(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
         Función para obtener las guardias en las que el usuario está demandando turno pero aún no se ha aprobado el cambio.
 
@@ -476,7 +479,7 @@ def guardias_pendientes(update, context):
                                  text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
 @autenticar
-def guardias_disponibles(update, context):
+def guardias_disponibles(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para obtener las guardias en las que hay al menos un puesto con propuesta de cambio.
 
@@ -513,7 +516,7 @@ def guardias_disponibles(update, context):
                                  text="Ha habido un error en la plataforma\nContacte por favor con soporte")
 
 @autenticar
-def guardias_propias(update, context):
+def guardias_propias(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para obtener las guardias propias del usuario actualmente establecidas.
 
@@ -559,10 +562,11 @@ def guardias_propias(update, context):
                              text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
                              )
 @autenticar_admin
-def guardias_aprobar_denegar(update, context):
+def guardias_aprobar_denegar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para obtener las guardias que están pendientes de aprobar o denegar y dar la posibilidad de aceptar o denegar el cambio
-    Se imprimirán las guardias y se colocarán botones para aprobar o denegar el cambio.
+
+    Se imprimirán las guardias y se colocarán botones para aprobar o denegar el cambio, bajo el mensaje con los datos del evento.
 
 
     Args:
@@ -602,7 +606,7 @@ def guardias_aprobar_denegar(update, context):
                              text="Ha habido un error recogiendo las guardias propias, por favor, póngase en contacto con el administrador"
                              )
 
-def ceder_evento(uid,attendee):
+def ceder_evento(uid:str,attendee:str)->gestor_calendario.Evento|None:
     """
     Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
 
@@ -623,7 +627,7 @@ def ceder_evento(uid,attendee):
         logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return None
 
-def notificar_aprobar_propuesta(borrados: list[str], asentados:list[str], evento:gestor_calendario.Evento):
+def notificar_aprobar_propuesta(borrados: list[str], asentados:list[str], evento:gestor_calendario.Evento)->bool:
     """
     Función para notificar a los usuarios afectados de un cambio de guardia.
 
@@ -659,7 +663,7 @@ def notificar_aprobar_propuesta(borrados: list[str], asentados:list[str], evento
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         return False
 
-def notificar_denegar_propuesta(borrados: list[str], mantenidos:list[str], evento:gestor_calendario.Evento):
+def notificar_denegar_propuesta(borrados: list[str], mantenidos:list[str], evento:gestor_calendario.Evento)->bool:
     """
     Función para notificar a los usuarios afectados de una denegación de cambio de guardia.
 
@@ -697,7 +701,7 @@ def notificar_denegar_propuesta(borrados: list[str], mantenidos:list[str], event
 
 
 
-def cancelar_propuesta_evento(uid,attendee):
+def cancelar_propuesta_evento(uid:str|int,attendee:str)->gestor_calendario.Evento|None:
     """
     Función para que un usuario pueda cancelar su propuesta de cambio
 
@@ -716,7 +720,7 @@ def cancelar_propuesta_evento(uid,attendee):
     except Exception as e:
         logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return None
-def tomar_evento(uid,attendee):
+def tomar_evento(uid:str|int,attendee:str)->gestor_calendario.Evento|None:
     """
     Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
 
@@ -742,7 +746,7 @@ def tomar_evento(uid,attendee):
         logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return None
 
-def borrar_mensaje(id_chat,id_mensaje):
+def borrar_mensaje(id_chat:str|int,id_mensaje:str|int)->bool:
     """
     Función para borrar un mensaje cuando se ha cursado la petición de tomar un evento
 
@@ -753,17 +757,18 @@ def borrar_mensaje(id_chat,id_mensaje):
     Returns:
         Verdadero si pudo completarlo, falso si no
     """
-    terminado=False
+    terminado:bool=False
     try:
         terminado=bot.deleteMessage(chat_id=id_chat,message_id=id_mensaje)
         return terminado
     except Exception as e:
         logging.getLogger(__name__).error(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+    finally:
         return terminado
 
 @autenticar_retorno
-def retorno_ceder(update, context):
+def retorno_ceder(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
     Toma una acción a realizar con un evento y su uid
@@ -814,11 +819,11 @@ def retorno_ceder(update, context):
         cursor.close()
         relacion.close()
 @autenticar_retorno
-def retorno_intercambiar(update, context):
+def retorno_intercambiar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
-    Toma una acción a realizar con un evento y su uid
 
+    Toma una acción a realizar con un evento y su uid.
     La acción es intercambiar, cambia el rol del usuario a OPT-PARTICIPANT para designar un hueco libre en el calendario de propuestas
 
     Args:
@@ -864,10 +869,11 @@ def retorno_intercambiar(update, context):
         cursor.close()
         relacion.close()
 @autenticar_retorno
-def retorno_cancelar(update, context):
+def retorno_cancelar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
-    Toma una acción a realizar con un evento y su uid
+
+    Toma una acción a realizar con un evento y su uid.
 
     La acción es cancelar, si es un usuario que estaba en NON-PARTICIPANT, lo borra del evento, y si es un usuario OPT-PARTICIPANT, lo vuelve a poner REQ-PARTICIPANT
     En el segundo caso,se evaluará si quedan sitios libres, si no queda ninguno en OPT-PARTICIPANT y se está demandando el turno, se borrará el evento,
@@ -928,7 +934,7 @@ def retorno_cancelar(update, context):
 
 
 @autenticar_retorno
-def retorno_tomar(update, context):
+def retorno_tomar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
     Toma una acción a realizar con un evento y su uid
@@ -1001,7 +1007,7 @@ def retorno_tomar(update, context):
 
 
 @autenticar_retorno_admin
-def retorno_aprobar(update, context):
+def retorno_aprobar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para recibir datos del administrador cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
     Toma una acción a realizar con un evento y su uid
@@ -1058,7 +1064,7 @@ def retorno_aprobar(update, context):
 
 
 @autenticar_retorno_admin
-def retorno_denegar(update, context):
+def retorno_denegar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
     Función para recibir datos del administrador cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
     Toma una acción a realizar con un evento y su uid

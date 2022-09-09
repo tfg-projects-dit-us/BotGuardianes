@@ -32,9 +32,9 @@ url_getroles            :str =None
 url_getIDtelporIDrest   :str =None
 usuario                 :str =None
 password                :str =None
-def start(user:str=None, contrasena:str=None, inserta_id_tel_por_id_rest:str=None, get_id_por_email:str=None,
-          get_nombre_por_id_rest:str=None,get_id_rest_por_id_tel:str=None,
-          get_rol_por_email:str=None,get_id_tel_por_id_rest:str=None):
+def start(user:str, contrasena:str, inserta_id_tel_por_id_rest:str, get_id_por_email:str,
+          get_nombre_por_id_rest:str,get_id_rest_por_id_tel:str,
+          get_rol_por_email:str,get_id_tel_por_id_rest:str)->None:
     """
     Función para inicializar  el módulo. Rellena las urls de acceso a la API REST y las credenciales.
 
@@ -45,8 +45,8 @@ def start(user:str=None, contrasena:str=None, inserta_id_tel_por_id_rest:str=Non
         get_id_por_email: URL para obtener la ID del servicio REST a partir del email
         get_nombre_por_id_rest: URL para obtener el nombre del doctor a partir de la ID del servicio REST
         get_id_rest_por_id_tel: URL para obtener la ID del servicio REST a partir de la ID de Telegram
-        get_rol_por_email:  URL para obtener los roles de un doctor a partir de su email
-        get_id_tel_por_id_rest:  URL para obtener la ID de Telegram a partir de la ID del servicio REST
+        get_rol_por_email: URL para obtener los roles de un doctor a partir de su email
+        get_id_tel_por_id_rest: URL para obtener la ID de Telegram a partir de la ID del servicio REST
     """
 
     global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel, url_getroles,url_getIDtelporIDrest
@@ -67,7 +67,7 @@ def start(user:str=None, contrasena:str=None, inserta_id_tel_por_id_rest:str=Non
                   " PASSWORD: " + password
                   )
 
-def InsertaTelegramID(idusuario:str|int,chatid:str|int):
+def InsertaTelegramID(idusuario:str|int,chatid:str|int)->str|None:
     """
     Inserta la ID de telegram del usuario, utilizando la ID REST del mismo
 
@@ -93,7 +93,7 @@ def InsertaTelegramID(idusuario:str|int,chatid:str|int):
 
     if respuesta.status_code ==200:
         return respuesta.text
-def GetIDPorEmail(email:str):
+def GetIDPorEmail(email:str)->str:
     """
     Obteiene la ID del usuario en el servicio REST a partir de su correo electrónico
 
@@ -122,7 +122,7 @@ def GetIDPorEmail(email:str):
         return "Email not found"
 
 
-def GetNombrePorID(id:str|int):
+def GetNombrePorID(id:str|int)->str:
     """
     Obtiene el nombre y apellido de un usuario en el servicio REST a partir de su ID
 
@@ -148,7 +148,7 @@ def GetNombrePorID(id:str|int):
         return nombre
     if "Could not fing a doctor" in respuesta.text:
         return "Email not found"
-def GetidRESTPorIDTel(id:str|int):
+def GetidRESTPorIDTel(id:str|int)->str:
     """
     Obtiene la ID del servicio REST de un usuario a partir de su ID en Telegram
 
@@ -176,7 +176,7 @@ def GetidRESTPorIDTel(id:str|int):
     if "Could not fing a doctor" in respuesta.text:
         return "Email not found"
 
-def GetEmailPorID(id:str|int):
+def GetEmailPorID(id:str|int)->str|None:
     """
     Obtiene el correo de un usuario a partir de su ID del servicio REST
 
@@ -202,7 +202,8 @@ def GetEmailPorID(id:str|int):
 
     return email
 
-def GetRolesPorEmail(mail:str):
+
+def GetRolesPorEmail(mail:str)->list[str]:
     """
     Obtiene los roles de un usuario
 
@@ -239,7 +240,7 @@ def GetRolesPorEmail(mail:str):
     finally:
         return roles
 
-def GetidTelPoridREST(id:str|int):
+def GetidTelPoridREST(id:str|int)->str:
     """
     Obtiene la ID de telegram de un usuario a partir de su ID del servicio REST
 
@@ -269,7 +270,7 @@ def GetidTelPoridREST(id:str|int):
         return "Email not found"
 
 
-def GetAdmins():
+def GetAdmins()->list[str]:
     """
     Obtiene una lista de administradores en la BBDD del servicio REST
 
@@ -279,6 +280,7 @@ def GetAdmins():
     respuesta = None
     admines=[]
     try:
+        #Obtenemos la respuesta de solicitar los roles
         respuesta = requests.get(url_getroles,
                                  auth=HTTPBasicAuth(usuario, password),
                                     params = {'rol': "Administrador"}

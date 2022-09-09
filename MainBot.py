@@ -1,3 +1,8 @@
+"""
+Script principal para iniciar la aplicación de BotGuardianes
+
+Desarrollado por Luis Marín Peña
+"""
 from telegram.ext import (ExtBot,Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler)
 import logging
 import sys
@@ -16,17 +21,18 @@ from modulos import gestor_calendario
 
 
 if __name__ == '__main__':
-
+    #Se cargan parámetros de entrada. El parámetro de entrada es la localización del archivo de configuración.
     parser = argparse.ArgumentParser(description='Bot de telegram para gestion de guardias hospitalarias')
     parser.add_argument('--config', help="Fichero de configuracion (Por defecto en ./data/config/config.yaml)", type=str, default="./data/config/config.yaml")
     args=parser.parse_args()
-
+    #Se carga el fichero de configuración guardado en yaml y se convierte a un diccionario llamado configuracion
     configuracion = config(directorio=args.config)
     logging.getLogger( __name__ ).debug('Cargado fichero de configuracion config.yaml')
+    logging.getLogger( __name__ ).debug(str(configuracion.configfile))
 
     # Este es el token del bot que se ha generado con BotFather.
-    logging.getLogger( __name__ ).debug(str(configuracion.configfile))
     tokenbot = configuracion.configfile['telegram']['token_bot']
+    #Se inicializa el módulo de contacto con el servicio rest.
     servicio_rest.start(
         user=configuracion.configfile['REST']['usuario'],
         contrasena=configuracion.configfile['REST']['contrasena'],
@@ -38,21 +44,25 @@ if __name__ == '__main__':
         get_id_tel_por_id_rest=configuracion.configfile['REST']['url_getTelegramID']
         )
 
+    logging.getLogger( __name__ ).debug('Cargada API REST')
 
-
-    logging.getLogger( __name__ ).debug('Cargado token de API REST')
+    #Inicializacion de módulo gestor_calendario
     gestor_calendario.start(
         url_servicio=configuracion.configfile['calendarios']['url_servidor'],
         usuario=configuracion.configfile['calendarios']['usuario'],
         contrasena=configuracion.configfile['calendarios']['contrasena']
     )
+    #Se crea objeto calendario principal
     cal_principal=gestor_calendario.Calendario(
         url=configuracion.configfile['calendarios']['url_definitivos']
     )
+    #Se crea objeto calendario propuestas
+
     cal_propuestas = gestor_calendario.Calendario(
         url=str(configuracion.configfile['calendarios']['url_propuestas'])
     )
     logging.getLogger( __name__ ).debug('Calendarios cargados')
+    #Inicializacion de telegram_tools.
     telegram_tools.start(
         token_bot=tokenbot,
         cal_prim=cal_principal,
@@ -62,18 +72,14 @@ if __name__ == '__main__':
         path_sqlite=configuracion.configfile['sqlite']['path']
     )
     logging.getLogger( __name__ ).debug('Cargado token de Telegram. TokenID= ' + tokenbot)
-    print("Calendarios cargados. Iniciado correctamente")
-    # Función para calcular el timestamp del primer dia del mes
+    print("Calendarios cargados. Iniciados todos los módulos correctamente")
 
-    # print(cal_principal.events)
-    # print(datetime.datetime.now())
-    # print(get_fecha_inicio_mes())
-    # print(get_fecha_fin_mes())
-
+    #Aquí se carga la función que actualiza lo que recibe el bot por parte de Telegram y por parte del software.
     updater = Updater(
         token=tokenbot,
         use_context=True
     )
+    #Este es el despachador del objeto updater.
     dispatcher = updater.dispatcher
 
     # La función registro_paso1 se le asigna a la funcion start del bot. Esta se llama cuando un usuario utiliza el bot por
@@ -86,7 +92,7 @@ if __name__ == '__main__':
         }
     )
     dispatcher.add_handler(conv_handler)
-
+    #Se agrega la función botones como /comando.
     botones_handler = CommandHandler('botones', telegram_tools.botones)
     # Añadimos función de guardias disponibles
     gdisp_handler = MessageHandler(Filters.regex('Guardias disponibles'), telegram_tools.guardias_disponibles)
@@ -98,6 +104,8 @@ if __name__ == '__main__':
     dispatcher.add_handler(gdisp_handler)
     gdisp_handler = MessageHandler(Filters.regex('Aprobar o denegar guardias'), telegram_tools.guardias_aprobar_denegar)
     dispatcher.add_handler(gdisp_handler)
+
+    #Se agregan retornos de botones contextuales de Telegram
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_ceder,pattern="ceder")
     dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_tomar,pattern="tomar")
@@ -108,6 +116,8 @@ if __name__ == '__main__':
     dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_cancelar,pattern="cancelar")
     dispatcher.add_handler(callback_handler)
+
+    #Se comienza a recoger mensajes del bot.
     updater.start_polling()
 
 
