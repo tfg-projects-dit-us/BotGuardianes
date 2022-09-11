@@ -138,6 +138,18 @@
 </div>
     
     
+      <div class="md-header__source">
+        <a href="https://github.com/tfg-projects-dit-us/BotGuardianes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
   </nav>
   
 </header>
@@ -170,6 +182,18 @@
     </a>
     BotGuardianes
   </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tfg-projects-dit-us/BotGuardianes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
     
@@ -455,6 +479,11 @@
               
                 
 
+  <a href="https://github.com/tfg-projects-dit-us/BotGuardianes/edit/master/docs/servicio_rest.md" title="Edit this page" class="md-content__button md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
 
   <h1>servicio_rest</h1>
 
@@ -516,6 +545,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>list[str]</code>
           </td>
           <td><p>Lista con los correos de los administradores, o lista vacía si no los encuentra.</p></td>
         </tr>
@@ -524,8 +554,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">272</span>
-<span class="normal">273</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">273</span>
 <span class="normal">274</span>
 <span class="normal">275</span>
 <span class="normal">276</span>
@@ -552,7 +581,8 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">297</span>
 <span class="normal">298</span>
 <span class="normal">299</span>
-<span class="normal">300</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetAdmins</span><span class="p">():</span>
+<span class="normal">300</span>
+<span class="normal">301</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetAdmins</span><span class="p">()</span><span class="o">-&gt;</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene una lista de administradores en la BBDD del servicio REST</span>
 
@@ -636,6 +666,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>str | None</code>
           </td>
           <td><p>Correo del usuario o None en caso contrario</p></td>
         </tr>
@@ -668,7 +699,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">200</span>
 <span class="normal">201</span>
 <span class="normal">202</span>
-<span class="normal">203</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetEmailPorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">):</span>
+<span class="normal">203</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetEmailPorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="o">|</span><span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene el correo de un usuario a partir de su ID del servicio REST</span>
 
@@ -748,6 +779,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>str</code>
           </td>
           <td><p>Devuelve la cadena <code>Email not found</code> si no encuentra el correo, o la ID en el servicio REST si lo encontró</p></td>
         </tr>
@@ -782,7 +814,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">119</span>
 <span class="normal">120</span>
 <span class="normal">121</span>
-<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetIDPorEmail</span><span class="p">(</span><span class="n">email</span><span class="p">:</span><span class="nb">str</span><span class="p">):</span>
+<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetIDPorEmail</span><span class="p">(</span><span class="n">email</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obteiene la ID del usuario en el servicio REST a partir de su correo electrónico</span>
 
@@ -864,6 +896,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>str</code>
           </td>
           <td><p>El nombre y apellido en caso de encontrar al doctor o el mensaje "Email not found"</p></td>
         </tr>
@@ -897,7 +930,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
-<span class="normal">150</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetNombrePorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">):</span>
+<span class="normal">150</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetNombrePorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene el nombre y apellido de un usuario en el servicio REST a partir de su ID</span>
 
@@ -978,6 +1011,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>list[str]</code>
           </td>
           <td><p>Lista de roles que tenga el usuario, o lista vacía si no los encuentra.</p></td>
         </tr>
@@ -986,8 +1020,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">205</span>
-<span class="normal">206</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">206</span>
 <span class="normal">207</span>
 <span class="normal">208</span>
 <span class="normal">209</span>
@@ -1021,7 +1054,8 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">237</span>
 <span class="normal">238</span>
 <span class="normal">239</span>
-<span class="normal">240</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetRolesPorEmail</span><span class="p">(</span><span class="n">mail</span><span class="p">:</span><span class="nb">str</span><span class="p">):</span>
+<span class="normal">240</span>
+<span class="normal">241</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetRolesPorEmail</span><span class="p">(</span><span class="n">mail</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene los roles de un usuario</span>
 
@@ -1112,6 +1146,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>str</code>
           </td>
           <td><p>Obtiene la ID del usuario en el servicio REST o el mensaje "Email not found"</p></td>
         </tr>
@@ -1146,7 +1181,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">174</span>
 <span class="normal">175</span>
 <span class="normal">176</span>
-<span class="normal">177</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidRESTPorIDTel</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">):</span>
+<span class="normal">177</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidRESTPorIDTel</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene la ID del servicio REST de un usuario a partir de su ID en Telegram</span>
 
@@ -1228,6 +1263,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>str</code>
           </td>
           <td><p>La ID de Telegram de un usuario, o "Email not found" en caso de no existir.</p></td>
         </tr>
@@ -1236,8 +1272,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">242</span>
-<span class="normal">243</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">243</span>
 <span class="normal">244</span>
 <span class="normal">245</span>
 <span class="normal">246</span>
@@ -1263,7 +1298,8 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">266</span>
 <span class="normal">267</span>
 <span class="normal">268</span>
-<span class="normal">269</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidTelPoridREST</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">):</span>
+<span class="normal">269</span>
+<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidTelPoridREST</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene la ID de telegram de un usuario a partir de su ID del servicio REST</span>
 
@@ -1356,6 +1392,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
     <tbody>
         <tr>
           <td>
+                <code>str | None</code>
           </td>
           <td><p>Devuelve el mensaje de ID de Telegram actualizado si se completa, o None si hay un fallo.</p></td>
         </tr>
@@ -1389,7 +1426,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">92</span>
 <span class="normal">93</span>
 <span class="normal">94</span>
-<span class="normal">95</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">InsertaTelegramID</span><span class="p">(</span><span class="n">idusuario</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">,</span><span class="n">chatid</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">):</span>
+<span class="normal">95</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">InsertaTelegramID</span><span class="p">(</span><span class="n">idusuario</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">,</span><span class="n">chatid</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="o">|</span><span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Inserta la ID de telegram del usuario, utilizando la ID REST del mismo</span>
 
@@ -1426,7 +1463,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
 
 <h2 id="modulos.servicio_rest.start" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">start</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contrasena</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_nombre_por_id_rest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_id_rest_por_id_tel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_rol_por_email</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_id_tel_por_id_rest</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">start</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">contrasena</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="p">,</span> <span class="n">get_nombre_por_id_rest</span><span class="p">,</span> <span class="n">get_id_rest_por_id_tel</span><span class="p">,</span> <span class="n">get_rol_por_email</span><span class="p">,</span> <span class="n">get_id_tel_por_id_rest</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1453,7 +1490,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>Usuario para acceder a la API REST</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
@@ -1463,7 +1500,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>Password para acceder a la API REST</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
@@ -1473,7 +1510,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>URL para insertar la ID de telegram en la BBDD</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
@@ -1483,7 +1520,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>URL para obtener la ID del servicio REST a partir del email</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
@@ -1493,7 +1530,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>URL para obtener el nombre del doctor a partir de la ID del servicio REST</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
@@ -1503,7 +1540,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>URL para obtener la ID del servicio REST a partir de la ID de Telegram</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
@@ -1513,7 +1550,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>URL para obtener los roles de un doctor a partir de su email</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
@@ -1523,7 +1560,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
           </td>
           <td><p>URL para obtener la ID de Telegram a partir de la ID del servicio REST</p></td>
           <td>
-                <code>None</code>
+              <em>required</em>
           </td>
         </tr>
     </tbody>
@@ -1564,9 +1601,9 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">65</span>
 <span class="normal">66</span>
 <span class="normal">67</span>
-<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">user</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contrasena</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-          <span class="n">get_nombre_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">get_id_rest_por_id_tel</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-          <span class="n">get_rol_por_email</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">get_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">user</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">contrasena</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span>
+          <span class="n">get_nombre_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">get_id_rest_por_id_tel</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span>
+          <span class="n">get_rol_por_email</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">get_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Función para inicializar  el módulo. Rellena las urls de acceso a la API REST y las credenciales.</span>
 
@@ -1577,8 +1614,8 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="sd">        get_id_por_email: URL para obtener la ID del servicio REST a partir del email</span>
 <span class="sd">        get_nombre_por_id_rest: URL para obtener el nombre del doctor a partir de la ID del servicio REST</span>
 <span class="sd">        get_id_rest_por_id_tel: URL para obtener la ID del servicio REST a partir de la ID de Telegram</span>
-<span class="sd">        get_rol_por_email:  URL para obtener los roles de un doctor a partir de su email</span>
-<span class="sd">        get_id_tel_por_id_rest:  URL para obtener la ID de Telegram a partir de la ID del servicio REST</span>
+<span class="sd">        get_rol_por_email: URL para obtener los roles de un doctor a partir de su email</span>
+<span class="sd">        get_id_tel_por_id_rest: URL para obtener la ID de Telegram a partir de la ID del servicio REST</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">global</span> <span class="n">url_inserta</span><span class="p">,</span> <span class="n">url_getID</span><span class="p">,</span><span class="n">usuario</span><span class="p">,</span><span class="n">password</span><span class="p">,</span><span class="n">url_getnombre</span><span class="p">,</span><span class="n">url_getIDrestporIDtel</span><span class="p">,</span> <span class="n">url_getroles</span><span class="p">,</span><span class="n">url_getIDtelporIDrest</span>
