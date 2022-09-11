@@ -1,0 +1,701 @@
+{
+	"info": {
+		"_postman_id": "4dc3e67d-08cb-4cb9-b377-533343051474",
+		"name": "Guardianes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "doctors",
+			"item": [
+				{
+					"name": "root",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Doctors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/doctors/",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"doctors",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Valid Doctor",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"firstName\": \"Jonh\",\n\t\"lastNames\": \"Smith\",\n\t\"email\": \"jonhsmith@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/doctors",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"doctors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Valid Doctor with Absence",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"firstName\": \"Mike\",\n\t\"lastNames\": \"Smith\",\n\t\"email\": \"jonhsmith@gmail.com\",\n\t\"absence\": {\n\t\t\"start\": \"2020-04-10\",\n\t\t\"end\": \"2020-05-10\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/doctors",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"doctors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Invalid Doctor (without lastnames)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"firstName\": \"Jonh\",\n\t\"email\": \"jonhsmith@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/doctors",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"doctors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update doctor",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"firstName\": \"Anne\",\n\t\"lastNames\": \"Smith\",\n\t\"email\": \"jonhsmith@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/doctors/1",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"doctors",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update doctor with absence",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"firstName\": \"Jonh\",\n\t\"lastNames\": \"Smith\",\n\t\"email\": \"jonhsmith@gmail.com\",\n\t\"absence\": {\n\t\t\"start\": \"2020-10-20\",\n\t\t\"end\": \"2020-11-15\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/doctors/7",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"doctors",
+								"7"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete doctor",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/doctors/1",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"doctors",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CycleShift",
+			"item": [
+				{
+					"name": "CycleShifts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/cycle-shifts/",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"cycle-shifts",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CycleShift",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/cycle-shifts/2020-02-01",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"cycle-shifts",
+								"2020-02-01"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New CycleShifts",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n    {\r\n        \"day\": 25,\r\n        \"month\": 6,\r\n        \"year\": 2020,\r\n        \"doctors\": [\r\n            {\r\n                \"id\": 8\r\n            },\r\n            {\r\n                \"id\": 9\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"day\": 26,\r\n        \"month\": 6,\r\n        \"year\": 2020,\r\n        \"doctors\": [\r\n            {\r\n                \"id\": 7\r\n            },\r\n            {\r\n                \"id\": 6\r\n            }\r\n        ]\r\n    }\r\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/cycle-shifts",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"cycle-shifts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid CycleShifts",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n            {\r\n                \"month\": 6,\r\n                \"year\": 2020,\r\n                \"doctors\": [\r\n                    {\r\n                        \"id\": 8\r\n                    },\r\n                    {\r\n                        \"id\": 9\r\n                    }\r\n                ]\r\n            },\r\n            {\r\n                \"day\": 26,\r\n                \"month\": 6,\r\n                \"year\": 2020,\r\n                \"doctors\": [\r\n                    {\r\n                        \"id\": 7\r\n                    },\r\n                    {\r\n                        \"id\": 6\r\n                    }\r\n                ]\r\n            }\r\n        ]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{req_method}}{{server_ip}}/cycle-shifts",
+							"host": [
+								"{{req_method}}{{server_ip}}"
+							],
+							"path": [
+								"cycle-shifts"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Telegram",
+			"item": [
+				{
+					"name": "INSERTAR TELEGRAM ID",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "guardiansUser",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "SheetSheepTowelPhone",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "2202521",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/guardians/api/doctors/telegramID/11",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guardians",
+								"api",
+								"doctors",
+								"telegramID",
+								"11"
+							]
+						},
+						"description": "Se pide un doctor que existe\n"
+					},
+					"response": []
+				},
+				{
+					"name": "CONSULTAR TELEGRAM ID",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "guardiansUser",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "SheetSheepTowelPhone",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/guardians/api/doctors/telegramID?id=18",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guardians",
+								"api",
+								"doctors",
+								"telegramID"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "18"
+								}
+							]
+						},
+						"description": "Se pide un doctor que existe\n"
+					},
+					"response": []
+				},
+				{
+					"name": "CONSULTAR ID POR MAIL",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "guardiansUser",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "SheetSheepTowelPhone",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/guardians/api/doctors/idDoctor?idTel=12052022",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guardians",
+								"api",
+								"doctors",
+								"idDoctor"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "10@guardians.com",
+									"disabled": true
+								},
+								{
+									"key": "idTel",
+									"value": "12052022"
+								}
+							]
+						},
+						"description": "Se pide un doctor que existe\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Calendario Doctor",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "guardiansUser",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "SheetSheepTowelPhone",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8080/guardians/api/calendars/?email=carmen-cohen@hotmail.com&yearMonth=2022-02",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guardians",
+								"api",
+								"calendars",
+								""
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "carmen-cohen@hotmail.com"
+								},
+								{
+									"key": "yearMonth",
+									"value": "2022-02"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Put Event",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "guardiansUser",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "SheetSheepTowelPhone",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "BEGIN:VCALENDAR\nPRODID:-//Mozilla.org/NONSGML Mozilla Calendar V1.1//EN\nVERSION:2.0\nBEGIN:VEVENT\nDTSTAMP:20220207T194654Z\nUID:132022jc\nSUMMARY:Jornadas Complementarias\nATTENDEE:mailto:carcohcal@alum.us.es\nATTENDEE:mailto:20@guardians.com\nDTSTART;VALUE=DATE:20220301\nEND:VEVENT\nEND:VCALENDAR\n",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/guardians/api/event/update",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"guardians",
+								"api",
+								"event",
+								"update"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Otros",
+			"item": [
+				{
+					"name": "CREATE a doctor",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {},
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "SheetSheepTowelPhone",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "guardiansUser",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"firstName\": \"Isabel\",\r\n\t\"lastNames\": \"Román\",\r\n\t\"email\": \"isa@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://172.18.0.3:8080/guardians/api",
+							"protocol": "http",
+							"host": [
+								"172",
+								"18",
+								"0",
+								"3"
+							],
+							"port": "8080",
+							"path": [
+								"guardians",
+								"api"
+							]
+						},
+						"description": "el content-type tiene que ser application/json y para eso en body marcar json"
+					},
+					"response": []
+				},
+				{
+					"name": "CONSULTAR DOCTOR POR ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/doctors/1",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doctors",
+								"1"
+							]
+						},
+						"description": "Solicita el médico identificado con 1"
+					},
+					"response": []
+				},
+				{
+					"name": "CONSULTAR DOCTOR POR MAIL, EXISTE",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/doctors?email=isa@gmail.com",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doctors"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "isa@gmail.com"
+								}
+							]
+						},
+						"description": "Consulta por mail"
+					},
+					"response": []
+				},
+				{
+					"name": "CONSULTAR TODOS LOS DOCTORS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/doctors",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doctors"
+							]
+						},
+						"description": "buscar un doctor por mail, que existe"
+					},
+					"response": []
+				},
+				{
+					"name": "CONSULTAR DOCTOR POR MAIL, NO EXISTE",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/doctors?email=isabel@gmail.com",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doctors"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "isabel@gmail.com"
+								}
+							]
+						},
+						"description": "Buscar un doctor por mail que no existe\n"
+					},
+					"response": []
+				},
+				{
+					"name": "CONSULTAR DOCTOR POR ID, NO EXISTE",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/doctors/1",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doctors",
+								"1"
+							]
+						},
+						"description": "Solicita doctor identificado con 1"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

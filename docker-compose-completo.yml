@@ -1,0 +1,87 @@
+version: "3"
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: "BotGuardianes2021"
+
+  davical:
+    image: tuxnvape/davical-standalone
+    volumes:
+      - davical_config:/config
+    restart: always
+    ports:
+      - 80:80
+    environment:
+      HOST_NAME: "guardianes"
+      PGSQL_ROOT_PASS: "BotGuardianes2021"
+      PASSDAVDB: "BotGuardianes2021"
+      DBHOST: "db"
+      ADMINDAVICALPASS: "BotGuardianes2021"
+      LANG: "en_US.UTF-8"
+      LC_ALL: "en_US.UTF-8"
+      DAVICAL_LANG: "en_US"
+  myapp-mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=db_guardians
+      - MYSQL_USER=springuser
+      - MYSQL_PASSWORD=CatChairShowShoe
+    ports:
+      - 3306:3306
+      
+  myapp-main:
+    image: andrewem/serviciodecalendarios:testing
+    restart: always
+    depends_on:
+      - myapp-mysql
+      - db
+      - davical
+    ports:
+      - 8080:8080
+    environment:
+      - DATABASE_HOST=myapp-mysql
+      - DATABASE_USER=springuser
+      - DATABASE_PASSWORD=CatChairShowShoe
+      - DATABASE_NAME=db_guardians
+      - DATABASE_PORT=3306
+  botguardianes:
+    image: luimarpen/botguardianes
+    restart: always
+    depends_on:
+      - myapp-mysql
+      - db
+      - davical
+      - myapp-main
+    volumes:
+      - botguardianes:/BotGuardianes/data
+    environment:
+      - URL_SERVIDOR= URL
+      - CAL_PROPUESTAS=propuestas
+      - CAL_PRINCIPAL=principal
+      - USER_CALENDAR=usuario
+      - PASS_CALENDAR= pass
+      - TOKEN_BOT=token
+      - ID_CANAL=-100ID
+      - ID_CANAL_ADMIN=-100ID
+      - LOG_LEVEL=warning
+      - PATH_SQLITE=./data/relaciones_id.sqlite
+      - REST_INSERTA_TELEGRAM_ID=URI
+      - REST_GET_ID_POR_EMAIL=URI
+      - REST_GET_NOMBRE_POR_ID=URI
+      - REST_GET_ID_REST_POR_ID_TEL=URI
+      - REST_GET_ROL=URI
+      - REST_GET_TELEGRAM_ID=URI
+      - REST_PASSWORD=Password
+      - REST_USUARIO= usuario
+    command: /bin/bash -c "mkdir -p /BotGuardianes/data/config && envsubst < /BotGuardianes/config_ejemplo/config.yaml > /BotGuardianes/data/config/config.yaml && python3.10 MainBot.py"
+volumes:
+  davical_config:
+  pgsql_data:
+  botguardianes:

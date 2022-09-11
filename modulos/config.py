@@ -12,8 +12,8 @@ class config:
     Clase para empaquetar la configuración del bot de telegram
 
     Attributes:
-        configfile(dict): Diccionario conteniendo la configuración en un fichero yaml
-        directorio(str): Ruta donde se encuentra el fichero de configuración. Por defecto en ./data/config/config.yaml
+        configfile (dict): Diccionario conteniendo la configuración en un fichero yaml
+        directorio (str): Ruta donde se encuentra el fichero de configuración. Por defecto en ./data/config/config.yaml
     """
 
 
@@ -28,7 +28,7 @@ class config:
         self.cargar_configuracion_lectura()
         self.crear_log()
         self.crear_db()
-    def cargar_configuracion_lectura(self, directorio:str=None)->dict:
+    def cargar_configuracion_lectura(self, directorio:str|None=None):
         """
         Carga la configuración desde el archivo YAML de configuración
 
@@ -37,7 +37,7 @@ class config:
             directorio: Directorio donde se encuentra el fichero de configuración. Util para cargar otro fichero de configuración en tiempo de ejecución
 
         Returns:
-            Devuelve diccionario con la configuración
+            (dict): Devuelve diccionario con la configuración
         """
         locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
         try:
@@ -52,7 +52,7 @@ class config:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return self.configfile
 
-    def crear_log(self, config:dict=None)->None:
+    def crear_log(self, config:dict|None=None):
         """
         Crea logs del servicio
 
@@ -99,6 +99,12 @@ class config:
                 Idevento TEXT NOT NULL,
                 Idmessage TEXT NOT NULL);
                 ''')
+        c.execute('''CREATE TABLE IF NOT EXISTS oferta_demanda(
+        ofertante TEXT NOT NULL,
+        demandante TEXT NOT NULL,
+        uid_evento TEXT NOT NULL);
+        '''
+        )
         connection.commit()
         c.close()
         connection.close()

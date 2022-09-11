@@ -114,7 +114,11 @@ if __name__ == '__main__':
     dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_denegar,pattern="denegar")
     dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_intercambiar,pattern="intercambiar")
+    dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_cancelar,pattern="cancelar")
+    dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_permutar,pattern="permutar")
     dispatcher.add_handler(callback_handler)
 
     #Se comienza a recoger mensajes del bot.

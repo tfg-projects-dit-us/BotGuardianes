@@ -10,7 +10,7 @@ Contiene también los atributos de módulo:
 
 - `cliente`: Variable a nivel de módulo con el objeto de manejo de cliente calDAV
 
-Y los métodos de módulo:
+Y el métodos de módulo:
 
 - `start(url_servicio,usuario,contrasena)`: Inicio del cliente calDAV
 """
@@ -54,7 +54,7 @@ def start(url_servicio:str, usuario:str=None, contrasena:str=None):
 
 class Evento:
     """
-    Clase que envuelve a un objeto de clase caldav.Event.
+    Clase que envuelve a un objeto de clase caldav.Event
 
     Genera métodos que permitan operar con este objeto con más facilidad
 
@@ -86,7 +86,9 @@ class Evento:
         correo2: {rol: ROL_DEL_ASISTENTE,tipo: TIPO_DEL_ASISTENTE}
         }
     ```
-
+    Attributes:
+        Event (caldav.Event): Evento tipo caldav.Event
+        asistentes (dict[dict]): Diccionario de asistentes
 
     """
 
@@ -110,26 +112,31 @@ class Evento:
         Obtiene nombre de evento o summary
 
         Returns:
-             str: cadena con nombre del evento
+             (str):Cadena con nombre del evento
         """
         return str(self.Event.vobject_instance.vevent.summary.value)
 
     def get_uid(self):
         """
         Obtiene uid del evento
+
         Returns:
-            str: uid del evento
+            (str):Uid del evento
         """
         return str(self.Event.vobject_instance.vevent.uid.value)
 
-    def get_asistentes(self,rol=""):
+    def get_asistentes(self,rol:str=""):
         """
         Obtiene un diccionario de diccionarios, con clave el correo del usuario
+
         La primera vez que se ejecuta, crea el diccionario completo.
+
+        Si se introduce un rol, obtiene un diccionario con los roles de asistentes indicados en el parámetro rol
+
         Args:
             rol: El rol de asistente que se quiere obtener. Pueden ser OPT-PARTICIPANT, REQ-PARTICIPANT o NON-PARTICIPANT
         Returns:
-             diccionario{diccionarios}
+             (dict[dict]):Devuelve un diccionario de diccionarios con clave principal el correo del usuario.
         """
         if self.asistentes == {}:
             if hasattr(self.Event.vobject_instance.vevent, 'attendee'):
@@ -155,22 +162,24 @@ class Evento:
             cuenta_aux=0
             for asistente in self.asistentes:
                 if self.asistentes[asistente]['rol']==rol:
-                    diccionario_aux.update(self.asistentes[asistente])
+                    diccionario_aux.update({asistente:self.asistentes[asistente]})
                     cuenta_aux+=1
             return diccionario_aux
         else:
             return self.asistentes
 
-    def set_asistente(self, correo_asistente, rol="",tipo='INDIVIDUAL'):
+    def set_asistente(self, correo_asistente:str, rol:str="",tipo:str='INDIVIDUAL'):
         """
         Actualiza lista de asistentes en el evento caldav.Event y el propio diccionario de gestor_calendario.Evento
+
 
         Args:
             correo_asistente: Correo del asistente que estamos queriendo actualizar
             rol: Valor de rol a definir para el asistente. Si no se incluye, se mantiene como estaba
             tipo: Valor de tipo del asistente. Si no se define, se mantiene como estaba originalmente.
+
         Returns:
-            int: 0 si es correcto, -1 si sucede una Excepción
+            (int): 0 si es correcto, -1 si sucede una Excepción
         """
         try:
             asistente=self.asistentes[correo_asistente]
@@ -185,6 +194,9 @@ class Evento:
         finally:
             if rol != "":
                 self.asistentes[correo_asistente]['rol'] = rol
+
+
+
 
             self.asistentes[correo_asistente]['tipo'] = tipo
 
@@ -227,7 +239,7 @@ class Evento:
             asistente: correo del asistente a borrar
 
         Returns:
-            True si lo borra con éxito, False si no
+            (bool):True si lo borra con éxito, False si no
         """
         result=False
         try:
@@ -249,28 +261,57 @@ class Evento:
             logging.getLogger(__name__).error(
                 "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
             return False
-    def asienta_asistentes(self):
+    def asienta_asistentes(self,ofertante:str="",demandante:str=""):
         """
-        Asienta los cambios en un evento. Borra los usuarios con rol OPT-PARTICIPANT y convierte los NON-PARTICIPANT en REQ-PARTICIPANT
+        Asienta los cambios en un evento.
+
+        Borra los usuarios con rol OPT-PARTICIPANT y convierte los NON-PARTICIPANT en REQ-PARTICIPANT
 
         Returns:
-            (borrados,asentados): Tupla que contiene dos listas, lista de correos de usuarios borrados y lista de correos de usuarios asentados
+            (tuple[bool,list[str],list[str]]):Tupla que contiene un bool indicando si se hizo el cambio bien y dos listas, lista de correos de usuarios borrados y lista de correos de usuarios asentados
         """
         lista_asentados=[]
         para_borrar=[]
         lista_borrados=[]
         try:
-            for asistente in self.asistentes:
-                if self.asistentes[asistente]['rol']=='NON-PARTICIPANT':
-                    self.set_asistente(asistente,rol='REQ-PARTICIPANT')
-                    lista_asentados.append(asistente)
-                if self.asistentes[asistente]['rol']=='OPT-PARTICIPANT':
-                    para_borrar.append(asistente)
+            if ofertante=="" and demandante=="":
+                for asistente in self.asistentes:
+                    if self.asistentes[asistente]['rol']=='NON-PARTICIPANT':
+                        self.set_asistente(asistente,rol='REQ-PARTICIPANT')
+                        lista_asentados.append(asistente)
+                    if self.asistentes[asistente]['rol']=='OPT-PARTICIPANT':
+                        para_borrar.append(asistente)
 
-            for asistente in para_borrar:
-                self.borrar_asistente(asistente)
-                lista_borrados.append(asistente)
-            return (lista_borrados,lista_asentados)
+                for asistente in para_borrar:
+                    self.borrar_asistente(asistente)
+                    lista_borrados.append(asistente)
+                return (True, lista_borrados,lista_asentados)
+            else:
+                for asistente in self.asistentes:
+                    if asistente==ofertante:
+                        self.borrar_asistente(asistente)
+                    if asistente==demandante:
+                        self.set_asistente(asistente,rol='REQ-PARTICIPANT')
+                return (True,)
+        except Exception as e:
+            logging.getLogger(__name__).error(
+                "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+            return (False,)
+    def negar_cambio_asistentes(self,ofertante:str,demandante:str):
+        """
+        Niega el cambio de una guardia, borrando al demandante del evento y poniendo al ofertante de REQ-PARTICIPANT
+
+        Args:
+            ofertante: Correo del ofertante
+            demandante: Correo del demandante
+
+        Returns:
+            (bool): True si realiza la negación, False si no
+        """
+        try:
+            self.set_asistente(ofertante,rol='REQ-PARTICIPANT')
+            self.borrar_asistente(demandante)
+            return True
         except Exception as e:
             logging.getLogger(__name__).error(
                 "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
@@ -283,11 +324,17 @@ class Evento:
             asistente: Correo del asistente
 
         Returns:
-            rol del asistente en cadena
+            (str):rol del asistente en cadena
         """
 
         return self.asistentes[asistente]['rol']
     def get_cuenta_asistentes(self):
+        """
+        Obtiene la cuenta de asistentes a un evento con el rol REQ-PARTICIPANT
+
+        Returns:
+            (int):Cantidad de asistentes requeridos a un evento.
+        """
         cuenta=0
         self.get_asistentes()
         for asistente in self.asistentes:
@@ -295,6 +342,12 @@ class Evento:
                 cuenta+=1
         return cuenta
     def get_cuenta_ofertantes(self):
+        """
+        Obtiene cuenta de ofertantes de un evento
+
+        Returns:
+            (int):Obtiene cantidad de asistentes con rol OPT-PARTICIPANT de un evento
+        """
         cuenta=0
         self.get_asistentes()
         for asistente in self.asistentes:
@@ -303,6 +356,12 @@ class Evento:
         return cuenta
 
     def get_cuenta_demandantes(self):
+        """
+        Obtiene cantidad de demandantes de un evento
+
+        Returns:
+            (int):Obtiene cantidad de asistentes con el rol NON-PARTICIPANT
+        """
         cuenta=0
         self.get_asistentes()
         for asistente in self.asistentes:
@@ -315,7 +374,7 @@ class Evento:
         Obtiene la fecha de inicio del evento en formato cadena
 
         Returns:
-            str: Fecha en formato [dia-mes-año horas-minutos]
+            (str): Fecha en formato [dia-mes-año horas-minutos]
         """
         return str(self.Event.vobject_instance.vevent.dtstart.value.strftime('%d-%m-%Y %H:%M'))
 
@@ -324,7 +383,7 @@ class Evento:
         Obtiene la fecha de inicio del evento en formato datetime
 
         Returns:
-            datetime.datetime
+            (datetime.datetime):Fecha de inicio del evento
         """
         return self.Event.vobject_instance.vevent.dtstart.value
 
@@ -337,7 +396,7 @@ class Evento:
         Los "NON-PARTICIPANT" cuentan como sitios ya solicitados
 
         Returns:
-                Cantidad de puestos libres
+            (int):Cantidad de puestos libres
         """
         sitios_libres=0
         if self.asistentes != {}:
@@ -353,7 +412,7 @@ class Evento:
 
         return sitios_libres
 
-    def get_comprobar_asistente(self, asistente:str, rol=""):
+    def get_comprobar_asistente(self, asistente:str, rol:str=""):
         """
         Comprueba si un asistente está en un evento
 
@@ -361,7 +420,7 @@ class Evento:
             asistente: Correo del asistente que se comprueba
             rol: Parámetro opcional. Sirve para comprobar si un usuario tiene cierto rol en concreto en el evento
         Returns:
-            True si está ( con el rol en concreto si es especificado), False si no
+            (bool):True si está ( con el rol en concreto si es especificado), False si no
         """
         resultado=False
         for attendee in self.asistentes:
@@ -380,14 +439,10 @@ class Calendario:
     """
     Clase para manejar un calendario con cliente calDAV
 
-    Atributes:
+    Attributes:
             url (str): Nombre del calendario
             calendario (caldav.Calendar): Calendario conectado con cliente calDAV
 
-    Methods:
-        get_fecha_inicio_mes(): Obtiene fecha de inicio del mes en curso
-        get_fecha_fin_mes():    Obtiene fecha de fin del mes en curso
-        cargar_calendario(nombre): Carga el calendario con el cliente calDAV en el atributo calendario
     """
 
     def __init__(self, url: str = None):
@@ -397,16 +452,16 @@ class Calendario:
         Args:
             url (str): La nombre del calendario que cargaremos
         """
-        self.url = url
-        self.calendario = None
+        self.url:str = url
+        self.calendario:caldav.Calendar = None
         self.cargar_calendario(self.url)
 
-    def cargar_calendario(self, nombre):
+    def cargar_calendario(self, nombre:str):
         """
         Inicialización del calendario mediante cliente calDAV
 
         Args:
-            nombre(str): nombre del calendario perteneciente al usuario de calDAV
+            nombre: nombre del calendario perteneciente al usuario de calDAV
 
         """
         global cliente
@@ -418,10 +473,19 @@ class Calendario:
         Función para calcular fecha inicio mes
 
         Returns:
-            datetime.datetime: Fecha en formato datetime
+            (datetime.datetime):Fecha en formato datetime
         """
         return arrow.utcnow().to('Europe/Madrid').floor('month').datetime
 
+    @staticmethod
+    def get_fecha_hoy():
+        """
+        Función para calcular fecha de hoy
+
+        Returns:
+            (datetime.datetime):Fecha en formato datetime
+        """
+        return arrow.utcnow().to('Europe/Madrid').floor('hour').datetime
     # Función para calcular el timestamp del último día del mes
     @staticmethod
     def get_fecha_fin_mes():
@@ -429,7 +493,7 @@ class Calendario:
         Función para calcular fecha fin mes
 
         Returns:
-            datetime.datetime: Fecha en formato datetime
+           (datetime.datetime):Fecha en formato datetime
         """
         return arrow.utcnow().to('Europe/Madrid').ceil('month').datetime
 
@@ -442,7 +506,7 @@ class Calendario:
             lista_eventos: Lista de eventos a ordenar por fecha
 
         Returns:
-            list[gestor_calendario.Evento]: Lista ordenada de eventos
+            (list[Evento]|None):Lista ordenada de eventos
         """
         lista_ordenada:list[Evento] = lista_eventos
         try:
@@ -453,18 +517,19 @@ class Calendario:
         finally:
             return lista_ordenada
 
-    def get_eventos(self, attendee=None,rol="",completos=False):
+    def get_eventos(self, attendee:str|None=None,rol:str="",completos:bool=False):
         """
         Obtiene los eventos de un calendario en el periodo del mes actual.
 
         Args:
-            attendee(Por defecto None): Asistente para quien estamos obteniendo lista de eventos.
+            attendee: Asistente para quien estamos obteniendo lista de eventos.
                 Si es None, obtenemos todos los eventos del periodo
-                Si tiene un valor, obtenemos solo los eventos con este asistente suscrito.ç
-            rol(Por defecto ""): Rol del asistente. Se utiliza para buscar eventos con cierto rol del participante
+                Si tiene un valor, obtenemos solo los eventos con este asistente suscrito.
+            rol: Rol del asistente. Se utiliza para buscar eventos con cierto rol del participante
+            completos: Se solicitan eventos que ya se puede ejecutar una cesión o intercambio.
 
         Returns:
-            list[gestor_calendario.Evento]: Lista de Evento
+            (list[Evento]):Lista de Evento
         """
         lista_eventos = []
         lista_eventos_aux = []
@@ -472,7 +537,7 @@ class Calendario:
         sitios_libres = 0
         sin_sitio = False
         try:
-            eventosmes = self.calendario.date_search(start=self.get_fecha_inicio_mes(), end=self.get_fecha_fin_mes(), expand=True)
+            eventosmes = self.calendario.date_search(start=self.get_fecha_hoy(), end=self.get_fecha_fin_mes(), expand=True)
             for x in eventosmes:
                 lista_eventos_aux.append(Evento(x))
 
@@ -503,7 +568,7 @@ class Calendario:
             print("Error cargando eventos: " + str(e))
             return None
 
-    def get_evento(self, uid_evento):
+    def get_evento(self, uid_evento:str):
         """
         Obtiene un evento a partir de la uid del evento
 
@@ -511,7 +576,7 @@ class Calendario:
             uid_evento: identificador único del evento
 
         Returns:
-            gestor_calendario.Evento: gestor_calendario.Evento con uid=uid_evento o None en caso de no encontrarse
+            (Evento|None):Evento con uid=uid_evento o None en caso de no encontrarse
         """
         try:
             return Evento(self.calendario.event_by_uid(uid=uid_evento))
@@ -528,7 +593,7 @@ class Calendario:
         Args:
             uid_evento: Identificador único del evento
         Returns:
-            (borrados,asentados,evento): Tupla que contiene dos listas, lista de correos de usuarios borrados y lista de correos de usuarios asentados, y el evento
+            (tuple[list[str],list[str],Evento]): Tupla que contiene dos listas, lista de correos de usuarios borrados y lista de correos de usuarios asentados, y el evento
         """
         try:
             evento=self.get_evento(uid_evento)
@@ -546,7 +611,7 @@ class Calendario:
             evento: (gestor_calendario.Evento) Evento a guardar
 
         Returns:
-            encontrado: Verdadero si pudo hacerlo, falso si no
+            (bool):Verdadero si pudo hacerlo, falso si no
         """
         try:
             evento_encontrado = self.calendario.event_by_uid(uid=evento.get_uid())
@@ -572,7 +637,7 @@ class Calendario:
         Busca un evento con la uid concretada en el calendario designado.
         Si no lo encuentra, usará el evento que se le pase por parámetros
 
-        Cambia el rol al asistente a OPT-PARTICIPANT y guarda el evento en el calendario
+        Cambia el rol al asistente a OPT-PARTICIPANT, el tipo a INDIVIDUAL y guarda el evento en el calendario
 
         Args:
             correo_usuario: Correo del usuario que se está tratando de cambiar el rol
@@ -580,7 +645,7 @@ class Calendario:
             evento: Evento que se pretende introducir en el calendario para casos en los que no se encuentra el evento
 
         Returns:
-            Evento: Evento que se ha podido guardar en el calendario o None en caso de Excepción.
+            (Evento|None):Evento que se ha podido guardar en el calendario o None en caso de Excepción.
         """
         try:
             logging.getLogger( __name__ ).debug("Tipo de evento: " + str(type(evento)))
@@ -624,7 +689,7 @@ class Calendario:
             evento: Evento que se pretende introducir en el calendario para casos en los que no se encuentra el evento
 
         Returns:
-            Evento: Evento que se ha podido guardar en el calendario o None en caso de Excepción.
+            (Evento|None): Evento que se ha podido guardar en el calendario o None en caso de Excepción.
         """
         evento_cancelado=False
         try:
@@ -662,8 +727,16 @@ class Calendario:
             logging.getLogger(__name__).error(
                 "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
             return None
-    def borrar_evento(self,uid_evento:str):
+    def borrar_evento(self,uid_evento:str)->bool:
+        """
+        Borra el evento del calendario con la uid correspondiente
 
+        Args:
+            uid_evento: uid del evento que se desea borrar
+
+        Returns:
+            Devuelve True si lo borró, False si no
+        """
         try:
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
@@ -675,16 +748,16 @@ class Calendario:
             logging.getLogger(__name__).error(
                 "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
             return False
-    def tomar_evento(self, correo_usuario:str , uid_evento:str):
+    def tomar_evento(self, correo_usuario:str , uid_evento:str)->Evento|None:
         """
         Busca un evento en el calendario y añade el correo_usuario con el rol NON-PARTICIPANT
 
         Args:
             correo_usuario: Correo del usuario que tomará la plaza libre del evento
-            uidevento: Identificador único del evento
+            uid_evento: Identificador único del evento
 
         Returns:
-            Evento: Evento que se ha podido guardar en el calendario o None en caso de Excepción.
+            Evento que se ha podido guardar en el calendario o None en caso de Excepción.
         """
         try:
             evento_buscado = self.get_evento(uid_evento=uid_evento)
@@ -694,7 +767,6 @@ class Calendario:
                     evento_tomado = self.set_evento(evento_buscado)
                     if evento_tomado == True:
                         return evento_buscado
-
         except Exception as e:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return None

@@ -19,6 +19,8 @@ import datetime
 import sys
 import logging
 import sqlite3
+import random
+
 from urllib.parse import urlparse
 from functools import wraps
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
@@ -37,14 +39,14 @@ canalid:        str                         =None
 canalid_admin:  str                         =None
 path_sqlite3:   str                         =None
 
-def autenticar(func:function):
+def autenticar(func):
     """
     Método para autenticar usuario al usar las funciones. Verifica si el usuario está inscrito en el servicio REST
 
     Se utiliza como un decorador
 
     Args:
-        func: Función a la que envuelve este método
+        func (function): Función a la que envuelve este método
 
     """
     @wraps(func)
@@ -61,13 +63,13 @@ def autenticar(func:function):
     return wrapper
 
 
-def autenticar_retorno(func:function):
+def autenticar_retorno(func):
     """
     Método para autenticar usuario al usar el retorno. Verifica si el usuario está inscrito en el servicio REST
     Se utiliza como un decorador
 
     Args:
-        func: Función a la que envuelve este método
+        func (function): Función a la que envuelve este método
 
     """
     @wraps(func)
@@ -83,13 +85,13 @@ def autenticar_retorno(func:function):
 
     return wrapper
 
-def autenticar_retorno_admin(func:function):
+def autenticar_retorno_admin(func):
     """
     Método para autenticar usuario al usar el retorno. Verifica si el usuario está inscrito en el servicio REST
     Se utiliza como un decorador
 
     Args:
-        func: Función a la que envuelve este método
+        func (function): Función a la que envuelve este método
 
     """
     @wraps(func)
@@ -112,13 +114,13 @@ def autenticar_retorno_admin(func:function):
     return wrapper
 
 
-def autenticar_admin(func:function):
+def autenticar_admin(func):
     """
     Método para autenticar usuario al usar las funciones del bot. Verifica si es un administrador.
     Se utiliza como un decorador
 
     Args:
-        func: Función a la que envuelve este método
+        func (function): Función a la que envuelve este método
 
     """
     @wraps(func)
@@ -174,7 +176,7 @@ def registro_paso1(update:telegram.Update, context:telegram.ext.CallbackContext)
         Devuelve estado actual del registro_paso1. Paso 1 completo
     """
     context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Introduce tu correo electronico para registrarte en la plataforma",
+                             text="Introduce tu correo electronico para identificarte en la plataforma",
                              reply_markup=telegram.ForceReply())
     return 1
 
@@ -214,7 +216,7 @@ def registro_paso2(update:telegram.Update, context:telegram.ext.CallbackContext)
                 # enviaríamos el id
                 if respuesta=='ID de telegram actualizado':
                     context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="Ha sido registrado en la plataforma, {}".format(servicio_rest.GetNombrePorID(idusuario)))  # Imprimimos su nombre
+                                     text="Ha sido identificado en la plataforma, {}".format(servicio_rest.GetNombrePorID(idusuario)))  # Imprimimos su nombre
                 else:
                     context.bot.send_message(chat_id=update.message.chat_id,
                                              text="Ha habido un error en la plataforma\nContacte por favor con soporte")
@@ -346,13 +348,13 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
     if accion == "cancelar":
         texto = "Cancelar propuesta de cambio"
     if accion == "tomar":
-        texto = "Pedir esta actividad cedida"
+        texto = "Demandar esta actividad cedida"
     if accion == "ceder":
         texto = "Ofrecer esta actividad"
     if accion=="aprobar_denegar":
         texto= "Aprobar este cambio de actividad"
     if accion=="permutar":
-        texto="Pedir esta actividad para intercambio"
+        texto="Demandar esta actividad para intercambio"
 
     if modo=="resumen":
         boton_callback = [[telegram.InlineKeyboardButton
@@ -459,16 +461,11 @@ def guardias_pendientes(update:telegram.Update, context:telegram.ext.CallbackCon
             logging.getLogger(__name__).debug("No hay guardias pendientes de ser aprobadas o denegadas")
         else:
             for e in lista_eventos_ofertados:
-                if e.get_sitios_libres()>0:
-                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
-                else:
-                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="nada")
+                mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
+
 
             for e in lista_eventos_demandados:
-                if e.get_sitios_libres()>0:
-                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
-                else:
-                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="nada")
+                mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar")
 
             logging.getLogger(__name__).debug(cadena)
 
@@ -703,7 +700,7 @@ def notificar_denegar_propuesta(borrados: list[str], mantenidos:list[str], event
 
 def cancelar_propuesta_evento(uid:str|int,attendee:str)->gestor_calendario.Evento|None:
     """
-    Función para que un usuario pueda cancelar su propuesta de cambio
+    Función para que un usuario pueda cancelar su oferta o su demanda
 
     Args:
         uid: Identificador único de un evento, que se utilizará para buscar el evento en el calendario
@@ -720,23 +717,89 @@ def cancelar_propuesta_evento(uid:str|int,attendee:str)->gestor_calendario.Event
     except Exception as e:
         logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return None
-def tomar_evento(uid:str|int,attendee:str)->gestor_calendario.Evento|None:
+def marcar_cambio(uid:str|int,demandante:str):
     """
-    Función para que un usuario pueda ceder su puesto en una guardia y guardar dicha propuesta en el calendario de propuestas
+    Función para marcar la cesión de ofertante a un demandante
+
+    Args:
+        uid: UID del evento a marcar
+        demandante: Correo del demandante
+
+    Returns:
+        (bool): True si lo marcó con éxito, False si no
+    """
+    evento = cal_propuestas.get_evento(uid)
+    relacion=sqlite3.connect(path_sqlite3)
+    cursor=relacion.cursor()
+    if isinstance(evento, gestor_calendario.Evento):
+        ofertantes=evento.get_asistentes(rol='OPT-PARTICIPANT')
+        lista=list(ofertantes.keys())
+        cursor.execute(
+            f"""SELECT ofertante FROM oferta_demanda where uid_evento="{evento.get_uid()}";""")
+        lectura = cursor.fetchall()
+
+        ofertante_marcado=random.choice(lista)
+
+        cursor.execute(f"""INSERT INTO  oferta_demanda  (ofertante,demandante,uid_evento)
+                       VALUES ( "{ofertante_marcado}","{demandante}","{uid}");""")
+        relacion.commit()
+
+    cursor.close()
+    relacion.close()
+def mostrar_propuesta(evento:gestor_calendario.Evento,demandante:str):
+    relacion=sqlite3.connect(path_sqlite3)
+    cursor=relacion.cursor()
+    cadena = "<b>{}</b>\n".format(evento.get_summary())
+
+    if evento.get_cuenta_asistentes() > 0:
+        cadena += "<i>Asignado a</i>:\n"
+        for asistente in evento.get_asistentes():
+            if evento.get_rol_asistente(asistente) == "REQ-PARTICIPANT":
+                nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
+                cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre, asistente)
+
+    cursor.execute(f"""SELECT ofertante FROM oferta_demanda where uid_evento="{evento.get_uid()}" and demandante="{demandante}";""")
+    lectura = cursor.fetchall()
+    if lectura != []:
+        ofertante= lectura[0][0]
+
+
+    cursor.close()
+    relacion.close()
+    nombre_ofertante = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(ofertante))
+    nombre_demandante=servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(demandante))
+    cadena += "\n<b>{}</b> (<i>{}</i>) cede a\n <b>{}</b> (<i>{}</i>)".format(nombre_ofertante,ofertante,nombre_demandante,demandante)
+
+    boton_callback = [
+        [
+            telegram.InlineKeyboardButton(
+                text="Aprobar este cambio de guardia", callback_data="{};{};{}".format("aprobar", evento.get_uid(),demandante)
+            ),
+
+            telegram.InlineKeyboardButton(
+                text="Denegar este cambio de guardia", callback_data="{};{};{}".format("denegar", evento.get_uid(),demandante)
+            )
+        ]]
+    reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
+    mensaje = bot.send_message(chat_id=canalid_admin, text=cadena,
+                               reply_markup=reply_markup, parse_mode="HTML")
+def tomar_evento(uid:str,attendee:str):
+    """
+    Función para que un usuario pueda demandar un puesto en una guardia ofrecida y guardar dicha propuesta en el calendario de propuestas
 
     Args:
         uid: Identificador único de un evento, que se utilizará para buscar el evento en el calendario
-        attendee: Correo del usuario que va a ceder su puesto en una guardia
+        attendee: Correo del usuario que va a demandar un puesto en una guardia
 
     Returns:
-        Devuelve un Evento si es de clase Evento. En caso de haber excepción devuelve None
+        (gestor_calendario.Evento|None):Devuelve un Evento si es de clase Evento. En caso de haber excepción devuelve None
     """
     try:
         evento=cal_propuestas.get_evento(uid)
         if isinstance(evento,gestor_calendario.Evento):
             evento_tomado=cal_propuestas.tomar_evento(correo_usuario=attendee,uid_evento=uid)
 
-            if evento_tomado:
+            if  isinstance(evento_tomado,gestor_calendario.Evento):
                 return evento_tomado
             else:
                 return None
@@ -795,7 +858,7 @@ def retorno_ceder(update:telegram.Update, context:telegram.ext.CallbackContext)-
 
                 if isinstance(cedido,gestor_calendario.Evento):
                     borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=update.callback_query.message.message_id)
-                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha cedido con éxito el evento {} en fecha {}".format(cedido.get_summary(),cedido.get_fecha_str()))
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Se ha ofrecido para cesión con éxito el evento {} en fecha {}".format(cedido.get_summary(),cedido.get_fecha_str()))
                     cursor.execute(f"""SELECT Idmessage FROM relaciones_id where Idevento="{cedido.get_uid()}";""")
                     idmensaje = cursor.fetchall()
                     if idmensaje==[]:
@@ -868,6 +931,21 @@ def retorno_intercambiar(update:telegram.Update, context:telegram.ext.CallbackCo
                                             format(sys._getframe(1).f_code.co_name,uid_evento,update.callback_query,e ))
         cursor.close()
         relacion.close()
+
+@autenticar_retorno
+def retorno_permutar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
+    """
+    Función para recibir datos del usuario cuando aprieta botones integrados en el propio chat y tratarlos adecuadamente.
+
+    Toma una acción a realizar con un evento y su uid.
+    La acción es permutar, el demandante recibe una encuesta con todas sus guardias futuras para proponer algunas de ellas como intercambio.
+
+    Args:
+        update: Objeto con parámetros del mensaje que envía el usuario al bot
+        context: Objeto con funciones de contexto del bot de telegram
+
+    """
+    pass
 @autenticar_retorno
 def retorno_cancelar(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
@@ -965,32 +1043,40 @@ def retorno_tomar(update:telegram.Update, context:telegram.ext.CallbackContext)-
                     if isinstance(tomado,gestor_calendario.Evento):
                         context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Evento en el que se ha inscrito")
                         mostrar_datos_evento("completo", tomado, update.callback_query.from_user.id, "nada")
-                        if tomado.get_sitios_libres()==0:
+                        ofertantes=tomado.get_asistentes("OPT-PARTICIPANT")
+                        demandantes=tomado.get_asistentes("NON-PARTICIPANT")
+                        if len(ofertantes)>0 and len(demandantes)>0:
                             if update.callback_query.message.chat_id!=canalid:
                                 borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=update.callback_query.message.message_id)
                                 cursor.execute(f"""SELECT Idmessage FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
                                 idmensaje=cursor.fetchall()
-                                borrar_mensaje(id_chat=update.callback_query.message.chat_id,id_mensaje=idmensaje)
-                                cursor.execute(f"""DELETE FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
-                                relacion.commit()
-
-                                context.bot.send_message(chat_id=canalid_admin,text="Se ha hecho una propuesta de cambio para aprobar o denegar.")
-                                mostrar_datos_evento("completo",tomado,canalid_admin,accion="aprobar_denegar")
+                                if len(ofertantes)==len(demandantes):
+                                    borrar_mensaje(id_chat=canalid,id_mensaje=idmensaje)
+                                    cursor.execute(f"""DELETE FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
+                                    relacion.commit()
+                                else:
+                                    editar_datos_evento(tomado,id_chat=canalid,id_mensaje=idmensaje,accion="ceder")
+                                marcar_cambio(tomado.get_uid(),correo)
+                                #mostrar_datos_evento("completo",tomado,canalid_admin,accion="aprobar_denegar")
+                                mostrar_propuesta(tomado,correo)
                             else:
-                                borrar_mensaje(id_chat=update.callback_query.message.chat_id,
-                                               id_mensaje=update.callback_query.message.message_id)
-                                cursor.execute(f"""DELETE  FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
-                                relacion.commit()
-                                context.bot.send_message(chat_id=canalid_admin,text="Se ha hecho una propuesta de cambio para aprobar o denegar.")
-                                mostrar_datos_evento("completo",tomado,canalid_admin,accion="aprobar_denegar")
+                                if len(ofertantes) == len(demandantes):
+                                    borrar_mensaje(id_chat=update.callback_query.message.chat_id,
+                                                   id_mensaje=update.callback_query.message.message_id)
+                                    cursor.execute(f"""DELETE  FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
+                                    relacion.commit()
+                                else:
+                                    editar_datos_evento(tomado,id_chat=canalid,id_mensaje=idmensaje,accion="ceder")
+                                marcar_cambio(tomado.get_uid(), correo)
+                                #mostrar_datos_evento("completo",tomado,canalid_admin,accion="aprobar_denegar")
+                                mostrar_propuesta(tomado, correo)
                         else:
                             cursor.execute(f"""SELECT Idmessage FROM relaciones_id where Idevento="{tomado.get_uid()}";""")
                             idmensaje = cursor.fetchall()
                             idmensaje = idmensaje[0][0]
                             editar_datos_evento(tomado, canalid, idmensaje, "tomar")
                     else:
-                        context.bot.send_message(chat_id=update.callback_query.from_user.id,text="Ha habido un problema a la hora de inscribirse en el evento."
-                                                                                                    "Póngase en contacto con un administrador")
+                        context.bot.send_message(chat_id=update.callback_query.from_user.id,text="No puede demandar este evento porque ya está inscrito en él o no hay puestos libres")
                 else:
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,
                                              text="No se puede usted inscribir en el evento porque ya está inscrito")
@@ -1026,33 +1112,50 @@ def retorno_aprobar(update:telegram.Update, context:telegram.ext.CallbackContext
     try:
         if update.callback_query.answer():
             logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
-            accion, uid_evento = update.callback_query.data.split(';')
+            accion, uid_evento,demandante= update.callback_query.data.split(';')
 
             if accion == "aprobar":
                 correo = servicio_rest.GetEmailPorID(
                     servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
-                (borrados, asentados, evento) =cal_propuestas.asentar_cambios(uid_evento)
+                evento=cal_propuestas.get_evento(uid_evento)
+
+                relacion = sqlite3.connect(path_sqlite3)
+                cursor = relacion.cursor()
+                cursor.execute(
+                    f"""SELECT ofertante,demandante FROM oferta_demanda where uid_evento="{evento.get_uid()}" and demandante="{demandante}";""")
+                lectura = cursor.fetchall()
+                if lectura != []:
+                    ofertante = lectura[0][0]
+
+
+
+
+                evento.asienta_asistentes(ofertante=ofertante,demandante=demandante)
 
                 if isinstance(evento, gestor_calendario.Evento):
-                    if cal_principal.set_evento(evento):
-                        cal_propuestas.borrar_evento(uid_evento)
+                    evento_modificado=cal_principal.get_evento(uid_evento)
+                    evento_modificado.set_asistente(demandante,'REQ-PARTICIPANT')
+                    evento_modificado.borrar_asistente(ofertante)
+                    if cal_principal.set_evento(evento_modificado):
+                        if evento.get_cuenta_ofertantes()==0:
+                            cal_propuestas.borrar_evento(uid_evento)
                         borrar_mensaje(id_chat=update.callback_query.message.chat_id,
                                        id_mensaje=update.callback_query.message.message_id)
-                        cadena_borrados=""
-                        cadena_asentados=""
-                        for borrado in borrados:
-                            cadena_borrados="\n- " + servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(borrado)) + cadena_borrados
-                        for asentado in asentados:
-                            cadena_asentados="\n- " + servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asentado)) + cadena_asentados
-                        texto_final="La propuesta de cambio del turno {} con fecha {} ha sido aprobada.\nSe han excluido a los usuarios:\n {} \n\nSe han incluido a los usuarios:\n {}"\
-                            .format(evento.get_summary(),evento.get_fecha_str(),cadena_borrados,cadena_asentados)
+
+                        texto_final="La propuesta de cambio del turno <b>{}</b> con fecha <i>{}</i> ha sido aprobada.\nSe ha excluido a {} \n\nSe ha incluido a {}"\
+                            .format(evento.get_summary(),evento.get_fecha_str(),
+                                    servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(ofertante)),servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(demandante)))
                         context.bot.send_message(chat_id=update.callback_query.from_user.id,
                                                  text=texto_final)
-                        notificar_aprobar_propuesta(borrados,asentados,evento)
+                        notificar_aprobar_propuesta([ofertante],[demandante],evento)
 
                 else:
                     logging.getLogger(__name__).debug("El evento {} se ha borrado del calendario de propuestas".format(uid_evento))
 
+                cursor.execute(f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{ofertante}" and demandante="{demandante}";""")
+                relacion.commit()
+                cursor.close()
+                relacion.close()
             logging.getLogger(__name__).debug("UID del evento es:{} por el usuario {}".
                                               format(uid_evento, update.callback_query.from_user.id))
 
@@ -1082,30 +1185,48 @@ def retorno_denegar(update:telegram.Update, context:telegram.ext.CallbackContext
     try:
         if update.callback_query.answer():
             logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
-            accion, uid_evento = update.callback_query.data.split(';')
+            accion, uid_evento,demandante = update.callback_query.data.split(';')
 
             if accion == "denegar":
-                correo = servicio_rest.GetEmailPorID(
-                    servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
                 evento=cal_propuestas.get_evento(uid_evento)
                 evento_original=cal_principal.get_evento(uid_evento)
-                denegado=cal_propuestas.borrar_evento(uid_evento)
 
-                if denegado==True:
-                    texto_final="Se ha denegado con éxito el turno. El turno actual queda de la forma siguiente"
+                relacion = sqlite3.connect(path_sqlite3)
+                cursor = relacion.cursor()
+                cursor.execute(
+                    f"""SELECT ofertante,demandante FROM oferta_demanda where uid_evento="{evento.get_uid()}" and demandante="{demandante}";""")
+                lectura = cursor.fetchall()
+                if lectura != []:
+                    ofertante = lectura[0][0]
+
+
+
+                if(evento.negar_cambio_asistentes(ofertante=ofertante,demandante=demandante)):
+                    resultado = cal_propuestas.set_evento(evento)
+
+                if resultado==True:
+                    texto_final="Se ha denegado con éxito el cambio del evento {} con fecha {}".format(evento.get_summary(),evento.get_fecha_str())
+                    if evento.get_cuenta_ofertantes()==0:
+                        cal_propuestas.borrar_evento(evento.get_uid())
+                        notificar_denegar_propuesta(borrados=evento.get_asistentes(rol="NON-PARTICIPANT"),
+                                                    mantenidos=evento.get_asistentes(rol="OPT-PARTICIPANT"),evento=evento)
+
+                    notificar_denegar_propuesta(borrados=list(demandante),mantenidos=list(ofertante),evento=evento)
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,text=texto_final)
                     mostrar_datos_evento("completo", evento_original, update.callback_query.from_user.id, "nada")
-                    cal_propuestas.borrar_evento(uid_evento)
                     borrar_mensaje(id_chat=update.callback_query.message.chat_id,
                                    id_mensaje=update.callback_query.message.message_id)
-                    notificar_denegar_propuesta(borrados=evento.get_asistentes(rol="NON-PARTICIPANT"),mantenidos=evento.get_asistentes(rol="OPT-PARTICIPANT"))
+
 
 
                 else:
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,
                                              text="Ha habido un problema a la hora de inscribirse en el evento."
                                                   "Póngase en contacto con un administrador")
-
+                cursor.execute(f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{ofertante}" and demandante="{demandante}";""")
+                relacion.commit()
+                cursor.close()
+                relacion.close()
             logging.getLogger(__name__).debug("UID del evento es:{} por el usuario {}".
                                               format(uid_evento, update.callback_query.from_user.id))
 
