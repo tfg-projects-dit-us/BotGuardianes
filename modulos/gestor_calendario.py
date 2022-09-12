@@ -125,7 +125,7 @@ class Evento:
         """
         return str(self.Event.vobject_instance.vevent.uid.value)
 
-    def get_asistentes(self,rol:str=""):
+    def get_asistentes(self,rol:str="",tipo=""):
         """
         Obtiene un diccionario de diccionarios, con clave el correo del usuario
 
@@ -135,6 +135,7 @@ class Evento:
 
         Args:
             rol: El rol de asistente que se quiere obtener. Pueden ser OPT-PARTICIPANT, REQ-PARTICIPANT o NON-PARTICIPANT
+            tipo: TIpo de asistente que se quiere obtener. Puede ser INDIVIDUAL or GROUP
         Returns:
              (dict[dict]):Devuelve un diccionario de diccionarios con clave principal el correo del usuario.
         """
@@ -162,6 +163,14 @@ class Evento:
             cuenta_aux=0
             for asistente in self.asistentes:
                 if self.asistentes[asistente]['rol']==rol:
+                    diccionario_aux.update({asistente:self.asistentes[asistente]})
+                    cuenta_aux+=1
+            return diccionario_aux
+        if tipo!="":
+            diccionario_aux={}
+            cuenta_aux=0
+            for asistente in self.asistentes:
+                if self.asistentes[asistente]['tipo']==tipo:
                     diccionario_aux.update({asistente:self.asistentes[asistente]})
                     cuenta_aux+=1
             return diccionario_aux
@@ -434,7 +443,15 @@ class Evento:
 
         return resultado
 
+    def get_data(self):
+        """
+        Obtiene los datos del evento en una cadena con formato ical
 
+        Returns:
+            (str): String con el evento en formato ical
+        """
+
+        return self.Event.data
 class Calendario:
     """
     Clase para manejar un calendario con cliente calDAV

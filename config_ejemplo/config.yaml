@@ -19,5 +19,6 @@ REST:
     url_getIDrestporIDtel: $REST_GET_ID_REST_POR_ID_TEL
     url_getrol: $REST_GET_ROL
     url_getTelegramID: $REST_GET_TELEGRAM_ID
+    url_evento:  $REST_EVENTO
     contrasena: $REST_PASSWORD
     usuario: $REST_USUARIO

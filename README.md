@@ -93,6 +93,8 @@ El tercer bloque, después del PATH de SQLITE son variables para la API REST
       - REST_GET_ROL= URL para obtener los roles de un doctor en la API REST. Para la versión actual, HTTP://IP_SERVIDOR:PUERTO/guardians/api/doctors/rol
 
       - REST_GET_TELEGRAM_ID= URL para obtener la ID de telegram a partir de la ID del servicio REST. Para la versión actual, HTTP://IP_SERVIDOR:PUERTO/guardians/api/doctors/telegramID
+    
+      - REST_EVENTO=URL para enviar un evento modificado al calendario del servicio REST
 
       - REST_PASSWORD=Password para utilizar el servicio REST
 

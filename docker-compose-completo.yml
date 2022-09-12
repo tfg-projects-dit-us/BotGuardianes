@@ -78,6 +78,7 @@ services:
       - REST_GET_ID_REST_POR_ID_TEL=URI
       - REST_GET_ROL=URI
       - REST_GET_TELEGRAM_ID=URI
+      - REST_EVENTO=URI
       - REST_PASSWORD=Password
       - REST_USUARIO= usuario
     command: /bin/bash -c "mkdir -p /BotGuardianes/data/config && envsubst < /BotGuardianes/config_ejemplo/config.yaml > /BotGuardianes/data/config/config.yaml && python3.10 MainBot.py"

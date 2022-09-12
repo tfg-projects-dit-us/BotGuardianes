@@ -30,11 +30,12 @@ url_getnombre           :str =None
 url_getIDrestporIDtel   :str =None
 url_getroles            :str =None
 url_getIDtelporIDrest   :str =None
+url_eventos             :str =None
 usuario                 :str =None
 password                :str =None
 def start(user:str, contrasena:str, inserta_id_tel_por_id_rest:str, get_id_por_email:str,
           get_nombre_por_id_rest:str,get_id_rest_por_id_tel:str,
-          get_rol_por_email:str,get_id_tel_por_id_rest:str)->None:
+          get_rol_por_email:str,get_id_tel_por_id_rest:str,put_evento:str)->None:
     """
     Función para inicializar  el módulo. Rellena las urls de acceso a la API REST y las credenciales.
 
@@ -47,15 +48,17 @@ def start(user:str, contrasena:str, inserta_id_tel_por_id_rest:str, get_id_por_e
         get_id_rest_por_id_tel: URL para obtener la ID del servicio REST a partir de la ID de Telegram
         get_rol_por_email: URL para obtener los roles de un doctor a partir de su email
         get_id_tel_por_id_rest: URL para obtener la ID de Telegram a partir de la ID del servicio REST
+        put_evento: URL para enviar el evento a la API REST.
     """
 
-    global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel, url_getroles,url_getIDtelporIDrest
+    global url_inserta, url_getID,usuario,password,url_getnombre,url_getIDrestporIDtel, url_getroles,url_getIDtelporIDrest,url_eventos
     url_inserta=inserta_id_tel_por_id_rest
     url_getID= get_id_por_email
     url_getnombre=get_nombre_por_id_rest
     url_getIDrestporIDtel=get_id_rest_por_id_tel
     url_getroles=get_rol_por_email
     url_getIDtelporIDrest=get_id_tel_por_id_rest
+    url_eventos=put_evento
     usuario=user
     password=contrasena
     logging.getLogger( __name__ ).debug("Inicializado el objeto REST con valores: " +
@@ -299,3 +302,30 @@ def GetAdmins()->list[str]:
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
     finally:
         return admines
+
+def SetEvento(evento_data:str):
+    """
+    Función para enviar el evento final a la API REST para que modifique el calendario de asignaciones
+
+    Args:
+        evento_data: Cadena con los datos del evento en formato ical
+
+    Returns:
+        (bool) : Verdadero si lo hizo bien, falso si no
+
+    """
+    respuesta = None
+    try:
+        # Obtenemos la respuesta de solicitar los roles
+        respuesta = requests.post(url_eventos,
+                                 auth=HTTPBasicAuth(usuario, password),
+                                 headers={'Content-Type': 'text/plain'},
+                                 data=str(evento_data)
+                                 )
+    except requests.exceptions.HTTPError as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
+        raise Exception
+
+    if respuesta.status_code == 200:
+        return respuesta.text

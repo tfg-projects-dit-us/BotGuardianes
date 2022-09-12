@@ -95,14 +95,13 @@ class config:
 
         connection=sqlite3.connect(self.configfile['sqlite']['path'])
         c=connection.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS relaciones_id (
-                Idevento TEXT NOT NULL,
-                Idmessage TEXT NOT NULL);
-                ''')
         c.execute('''CREATE TABLE IF NOT EXISTS oferta_demanda(
         ofertante TEXT NOT NULL,
-        demandante TEXT NOT NULL,
-        uid_evento TEXT NOT NULL);
+        demandante TEXT,
+        uid_evento TEXT NOT NULL,
+        id_mensaje_canal_admins TEXT,
+        id_mensaje_canal_publicaciones TEXT,
+        accion TEXT);
         '''
         )
         connection.commit()

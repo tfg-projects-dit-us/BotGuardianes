@@ -41,7 +41,9 @@ if __name__ == '__main__':
         get_nombre_por_id_rest=configuracion.configfile['REST']['url_getnombreporID'],
         get_id_rest_por_id_tel= configuracion.configfile['REST']['url_getIDrestporIDtel'],
         get_rol_por_email=configuracion.configfile['REST']['url_getrol'],
-        get_id_tel_por_id_rest=configuracion.configfile['REST']['url_getTelegramID']
+        get_id_tel_por_id_rest=configuracion.configfile['REST']['url_getTelegramID'],
+        put_evento=configuracion.configfile['REST']['url_evento']
+
         )
 
     logging.getLogger( __name__ ).debug('Cargada API REST')
@@ -94,15 +96,15 @@ if __name__ == '__main__':
     dispatcher.add_handler(conv_handler)
     #Se agrega la función botones como /comando.
     botones_handler = CommandHandler('botones', telegram_tools.botones)
-    # Añadimos función de guardias disponibles
-    gdisp_handler = MessageHandler(Filters.regex('Guardias disponibles'), telegram_tools.guardias_disponibles)
+    # Añadimos función de Actividades disponibles
+    gdisp_handler = MessageHandler(Filters.regex('Actividades disponibles'), telegram_tools.guardias_disponibles)
     dispatcher.add_handler(botones_handler)
     dispatcher.add_handler(gdisp_handler)
-    gdisp_handler = MessageHandler(Filters.regex('Guardias propias'), telegram_tools.guardias_propias)
+    gdisp_handler = MessageHandler(Filters.regex('Actividades propias'), telegram_tools.guardias_propias)
     dispatcher.add_handler(gdisp_handler)
-    gdisp_handler = MessageHandler(Filters.regex('Guardias pendientes'), telegram_tools.guardias_pendientes)
+    gdisp_handler = MessageHandler(Filters.regex('Actividades pendientes'), telegram_tools.guardias_pendientes)
     dispatcher.add_handler(gdisp_handler)
-    gdisp_handler = MessageHandler(Filters.regex('Aprobar o denegar guardias'), telegram_tools.guardias_aprobar_denegar)
+    gdisp_handler = MessageHandler(Filters.regex('Aprobar o denegar cambios'), telegram_tools.guardias_aprobar_denegar)
     dispatcher.add_handler(gdisp_handler)
 
     #Se agregan retornos de botones contextuales de Telegram
