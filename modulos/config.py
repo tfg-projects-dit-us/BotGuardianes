@@ -105,5 +105,14 @@ class config:
         '''
         )
         connection.commit()
+        c.execute('''CREATE TABLE IF NOT EXISTS propuestas(
+        ofertante TEXT NOT NULL,
+        demandante TEXT NOT NULL,
+        uid_evento_ofertado TEXT NOT NULL,
+        uid_evento_propuesto TEXT
+        );
+        '''
+        )
+        connection.commit()
         c.close()
         connection.close()

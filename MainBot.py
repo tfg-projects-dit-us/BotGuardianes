@@ -97,9 +97,8 @@ if __name__ == '__main__':
     #Se agrega la función botones como /comando.
     botones_handler = CommandHandler('botones', telegram_tools.botones)
     # Añadimos función de Actividades disponibles
-    gdisp_handler = MessageHandler(Filters.regex('Actividades disponibles'), telegram_tools.guardias_disponibles)
     dispatcher.add_handler(botones_handler)
-    dispatcher.add_handler(gdisp_handler)
+
     gdisp_handler = MessageHandler(Filters.regex('Actividades propias'), telegram_tools.guardias_propias)
     dispatcher.add_handler(gdisp_handler)
     gdisp_handler = MessageHandler(Filters.regex('Actividades pendientes'), telegram_tools.guardias_pendientes)
@@ -110,19 +109,20 @@ if __name__ == '__main__':
     #Se agregan retornos de botones contextuales de Telegram
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_ceder,pattern="ceder")
     dispatcher.add_handler(callback_handler)
-    callback_handler=CallbackQueryHandler(telegram_tools.retorno_tomar,pattern="tomar")
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_tomar_cesion, pattern="tomar")
     dispatcher.add_handler(callback_handler)
-    callback_handler=CallbackQueryHandler(telegram_tools.retorno_aprobar,pattern="aprobar")
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_aprobar_cesion, pattern="aprobar_cesion")
     dispatcher.add_handler(callback_handler)
-    callback_handler=CallbackQueryHandler(telegram_tools.retorno_denegar,pattern="denegar")
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_denegar_cesion, pattern="denegar_cesion")
     dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_intercambiar,pattern="intercambiar")
     dispatcher.add_handler(callback_handler)
-    callback_handler=CallbackQueryHandler(telegram_tools.retorno_cancelar,pattern="cancelar")
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_cancelar_cesion, pattern="cancelar_cesion")
     dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_permutar,pattern="permutar")
     dispatcher.add_handler(callback_handler)
-
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_propuesta,pattern="propuesta")
+    dispatcher.add_handler(callback_handler)
     #Se comienza a recoger mensajes del bot.
     updater.start_polling()
 

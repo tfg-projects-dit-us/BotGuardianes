@@ -296,11 +296,8 @@ class Evento:
                     lista_borrados.append(asistente)
                 return (True, lista_borrados,lista_asentados)
             else:
-                for asistente in self.asistentes:
-                    if asistente==ofertante:
-                        self.borrar_asistente(asistente)
-                    if asistente==demandante:
-                        self.set_asistente(asistente,rol='REQ-PARTICIPANT')
+                self.borrar_asistente(ofertante)
+                self.set_asistente(demandante,rol='REQ-PARTICIPANT')
                 return (True,)
         except Exception as e:
             logging.getLogger(__name__).error(
@@ -649,7 +646,7 @@ class Calendario:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return False
 
-    def ceder_evento(self, correo_usuario: str, uid_evento: str, evento: Evento = None):
+    def ofertar_evento(self, correo_usuario: str, uid_evento: str, tipo:str= 'INDIVIDUAL', evento: Evento = None):
         """
         Busca un evento con la uid concretada en el calendario designado.
         Si no lo encuentra, usará el evento que se le pase por parámetros
@@ -669,7 +666,7 @@ class Calendario:
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
                 if evento_buscado.get_comprobar_asistente(correo_usuario):
-                    evento_buscado.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
+                    evento_buscado.set_asistente(correo_usuario, rol="OPT-PARTICIPANT",tipo=tipo)
 
                 evento_cedido = self.set_evento(evento_buscado)
                 if evento_cedido == True:
@@ -678,7 +675,7 @@ class Calendario:
             if isinstance(evento, Evento) and not isinstance(evento_buscado, Evento) :
 
                 if evento.get_comprobar_asistente(correo_usuario):
-                    evento.set_asistente(correo_usuario, rol="OPT-PARTICIPANT")
+                    evento.set_asistente(correo_usuario, rol="OPT-PARTICIPANT",tipo=tipo)
 
                 evento_cedido = self.set_evento(evento)
 
@@ -689,7 +686,7 @@ class Calendario:
             logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
             return None
 
-    def cancelar_evento(self, correo_usuario: str, uid_evento: str, evento: Evento = None):
+    def cancelar_evento(self, correo_usuario: str, uid_evento: str):
         """
         Busca un evento con la uid concretada en el calendario designado.
         Si no lo encuentra, usará el evento que se le pase por parámetros
@@ -703,14 +700,13 @@ class Calendario:
         Args:
             correo_usuario: Correo del usuario que se está tratando de cambiar el rol
             uid_evento: UID del evento que se está buscando en el calendario
-            evento: Evento que se pretende introducir en el calendario para casos en los que no se encuentra el evento
 
         Returns:
             (Evento|None): Evento que se ha podido guardar en el calendario o None en caso de Excepción.
         """
         evento_cancelado=False
         try:
-            logging.getLogger(__name__).debug("Tipo de evento: " + str(type(evento)))
+            logging.getLogger(__name__).debug("Tipo de evento: " + str(type(evento_cancelado)))
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
                 rol_asistente=evento_buscado.get_rol_asistente(asistente=correo_usuario)
@@ -723,8 +719,6 @@ class Calendario:
                     if ofertantes > demandantes:
                         evento_buscado.set_asistente(correo_usuario, rol="REQ-PARTICIPANT")
                         evento_cancelado = self.set_evento(evento_buscado)
-                    if ofertantes <= demandantes:
-                        pass
                     """Se envía un mensaje al usuario indicando que no puede realizar esta acción"""
 
                     ofertantes = evento_buscado.get_cuenta_ofertantes()
@@ -765,7 +759,7 @@ class Calendario:
             logging.getLogger(__name__).error(
                 "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
             return False
-    def tomar_evento(self, correo_usuario:str , uid_evento:str)->Evento|None:
+    def tomar_evento(self, correo_usuario:str , uid_evento:str,tipo='INDIVIDUAL')->Evento|None:
         """
         Busca un evento en el calendario y añade el correo_usuario con el rol NON-PARTICIPANT
 
@@ -780,7 +774,7 @@ class Calendario:
             evento_buscado = self.get_evento(uid_evento=uid_evento)
             if isinstance(evento_buscado, Evento):
                 if evento_buscado.get_comprobar_asistente(correo_usuario)!=True and evento_buscado.get_sitios_libres() > 0:
-                    evento_buscado.set_asistente(correo_usuario, rol="NON-PARTICIPANT")
+                    evento_buscado.set_asistente(correo_usuario, rol="NON-PARTICIPANT",tipo=tipo)
                     evento_tomado = self.set_evento(evento_buscado)
                     if evento_tomado == True:
                         return evento_buscado
