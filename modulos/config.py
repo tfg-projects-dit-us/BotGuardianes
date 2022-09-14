@@ -101,7 +101,8 @@ class config:
         uid_evento TEXT NOT NULL,
         id_mensaje_canal_admins TEXT,
         id_mensaje_canal_publicaciones TEXT,
-        accion TEXT);
+        accion TEXT,
+        uid_evento_propuesta_intercambio TEXT);
         '''
         )
         connection.commit()
@@ -109,7 +110,8 @@ class config:
         ofertante TEXT NOT NULL,
         demandante TEXT NOT NULL,
         uid_evento_ofertado TEXT NOT NULL,
-        uid_evento_propuesto TEXT
+        uid_evento_propuesto TEXT,
+        id_mensaje_chat TEXT
         );
         '''
         )

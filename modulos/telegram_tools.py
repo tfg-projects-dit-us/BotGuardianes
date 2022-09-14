@@ -924,6 +924,60 @@ def borrar_mensaje(id_chat:str|int,id_mensaje:str|int)->bool:
     finally:
         return terminado
 
+
+def lista_propuestas_seleccionadas(demandante:str, eventos_ya_propuestos:list[str]=[]):
+
+    global cal_principal
+    reply_markup:telegram.InlineKeyboardMarkup=[]
+    texto:str=""
+    try:
+        if eventos_ya_propuestos!=[]:
+            texto="Propuestas las actividades siguientes\n"
+            for id in eventos_ya_propuestos:
+                evento=cal_principal.get_evento(uid_evento=id)
+                texto+="\n{} en fecha {}".format(evento.get_summary(),evento.get_fecha_str())
+        else:
+            texto="Escoja una o más actividades y pulse Enviar"
+        lista_eventos=cal_principal.get_eventos(demandante)
+        fila_botones=[]
+        columna_botones=[]
+        for evento in lista_eventos:
+            if evento.get_uid() not in eventos_ya_propuestos:
+                if len(fila_botones) < 1:
+                    fila_botones.append(
+                        telegram.InlineKeyboardButton(
+                            text="{} - {}".format(evento.get_summary(),
+                                                                    evento.get_fecha_str()),
+                            callback_data="{};{}".format("hacer_propuesta", evento.get_uid())
+                        )
+                    )
+                    if evento == lista_eventos[-1]:
+                        columna_botones.append(list(fila_botones))
+                else:
+                    columna_botones.append(list(fila_botones))
+                    fila_botones.clear()
+                    fila_botones.append(
+                        telegram.InlineKeyboardButton(
+                            text="{} - {}".format(evento.get_summary(),
+                                                                    evento.get_fecha_str()),
+                            callback_data="{};{}".format("hacer_propuesta", evento.get_uid())
+                        )
+                    )
+                    if evento == lista_eventos[-1]:
+                        columna_botones.append(list(fila_botones))
+
+        columna_botones.append([telegram.InlineKeyboardButton(
+            text="Deshacer las selecciones", callback_data="{}".format("deshacer_propuesta")
+        ), telegram.InlineKeyboardButton(
+            text="Enviar las propuestas", callback_data="{}".format("enviar_propuesta")
+        )])
+
+        reply_markup = telegram.InlineKeyboardMarkup(columna_botones)
+
+        return reply_markup,texto
+    except BaseException as e:
+        logging.getLogger( __name__ ).error("Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
+                                            format(sys._getframe(1).f_code.co_name,uid_evento,update.callback_query,e ))
 @autenticar_retorno
 def retorno_ceder(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
     """
@@ -1036,7 +1090,6 @@ def retorno_permutar(update:telegram.Update, context:telegram.ext.CallbackContex
 
     """
     global cal_principal, cal_propuestas, bot, canalid
-    opciones=[]
     botones=[]
     relacion = sqlite3.connect(path_sqlite3)
     cursor = relacion.cursor()
@@ -1052,47 +1105,17 @@ def retorno_permutar(update:telegram.Update, context:telegram.ext.CallbackContex
                 permutado = permutar_evento(uid_evento, correo)
 
                 if isinstance(permutado, gestor_calendario.Evento):
-                    cursor.execute(f"""UPDATE oferta_demanda  set demandante="{correo}",id_mensaje_canal_publicaciones=null where uid_evento="{uid_evento}" and id_mensaje_canal_publicaciones="{update.callback_query.message.message_id}" and accion="intercambiar";""")
+                    cursor.execute(f"""UPDATE oferta_demanda  set demandante="{correo}",id_mensaje_canal_publicaciones=null,accion="permutar" where uid_evento="{uid_evento}" and id_mensaje_canal_publicaciones="{update.callback_query.message.message_id}" and accion="intercambiar";""")
                     relacion.commit()
                     borrar_mensaje(id_chat=canalid,id_mensaje=update.callback_query.message.message_id)
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,
                                              text="Se ha demandado para intercambio el evento {} en fecha {}".format(
                                                  permutado.get_summary(), permutado.get_fecha_str()))
-                    lista_eventos = cal_principal.get_eventos(correo)
-                    fila_botones=[]
-                    columna_botones=[]
-                    for evento in lista_eventos:
-                        opciones.append("{} en fecha {}".format(evento.get_summary(),evento.get_fecha_str()))
-                        if len(fila_botones)<3:
-                            fila_botones.append(
-                                telegram.InlineKeyboardButton(
-                                    text="ActividaD: {} en fecha {}".format(evento.get_summary(),evento.get_fecha_str()), callback_data="{};{}".format("propuesta", evento.get_uid())
-                                )
-                            )
-                            if evento == lista_eventos[-1]:
-                                columna_botones.append(fila_botones)
-                        else:
-                            columna_botones.append(fila_botones)
-                            fila_botones.clear()
-                            fila_botones.append(
-                                telegram.InlineKeyboardButton(
-                                    text="Actividad: {} en fecha {}".format(evento.get_summary(),
-                                                                            evento.get_fecha_str()),
-                                    callback_data="{};{}".format("propuesta", evento.get_uid())
-                                )
-                            )
 
-
-                    columna_botones.append([telegram.InlineKeyboardButton(
-                                    text="Deshacer las selecciones", callback_data="{};{}".format("propuesta","deshacer")
-                                ), telegram.InlineKeyboardButton(
-                                    text="Enviuar las propuestas", callback_data="{};{}".format("propuesta", "enviar")
-                                )])
-
-                    reply_markup = telegram.InlineKeyboardMarkup(columna_botones)
+                    reply_markup,texto=lista_propuestas_seleccionadas(correo)
                     mensaje=context.bot.send_message(
                         chat_id=update.callback_query.from_user.id,
-                        text="Escoja una o más actividades y pulse Enviar",
+                        text=texto,
                         reply_markup=reply_markup
                     )
 
@@ -1110,18 +1133,214 @@ def retorno_permutar(update:telegram.Update, context:telegram.ext.CallbackContex
 @autenticar_retorno
 def retorno_propuesta(update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
     global cal_principal, cal_propuestas, bot, canalid
+    relacion=sqlite3.connect(path_sqlite3)
+    cursor=relacion.cursor()
 
     try:
         if update.callback_query.answer():
             logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
-            accion, uid_evento = update.callback_query.data.split(';')
+            accion, uid_evento_propuesto = update.callback_query.data.split(';')
+            demandante=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+            cursor.execute(f"""SELECT ofertante,uid_evento from oferta_demanda where accion="permutar" and demandante="{demandante}" and id_mensaje_canal_admins IS NULL and id_mensaje_canal_publicaciones IS NULL;""")
+            datos=cursor.fetchall()
+            ofertante=datos[0][0]
+            uid_evento_ofertado=datos[0][1]
+            cursor.execute(
+                f"""INSERT INTO propuestas (ofertante,demandante,id_mensaje_chat,uid_evento_ofertado,uid_evento_propuesto ) 
+                VALUES("{ofertante}","{demandante}","{update.callback_query.message.message_id}","{uid_evento_ofertado}","{uid_evento_propuesto}") ;""")
+            relacion.commit()
+            cursor.execute(f"""SELECT uid_evento_propuesto from propuestas 
+            where demandante="{demandante}" and ofertante="{ofertante}" and uid_evento_ofertado="{uid_evento_ofertado}" and id_mensaje_chat="{update.callback_query.message.message_id}";""")
+            id_eventos_aux=cursor.fetchall()
+            id_eventos=[]
+            for id_evento in id_eventos_aux:
+                id_eventos.append(id_evento[0])
 
+
+            reply_markup,texto=lista_propuestas_seleccionadas(demandante, id_eventos)
+            context.bot.edit_message_text(chat_id=update.callback_query.from_user.id,message_id=update.callback_query.message.message_id,text=texto,reply_markup=reply_markup)
+
+
+        cursor.close()
+        relacion.close()
     except BaseException as e:
         logging.getLogger(__name__).error(
             "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
             format(sys._getframe(1).f_code.co_name, uid_evento, update.callback_query, e))
         cursor.close()
         relacion.close()
+
+
+@autenticar_retorno
+def retorno_propuesta_deshacer(update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    global cal_principal, cal_propuestas, bot, canalid
+    relacion=sqlite3.connect(path_sqlite3)
+    cursor=relacion.cursor()
+
+    try:
+        if update.callback_query.answer():
+            logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
+            accion= update.callback_query.data.split(';')
+            demandante=servicio_rest.GetEmailPorID(servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+            cursor.execute(f"""SELECT ofertante,uid_evento from oferta_demanda where accion="permutar" and demandante="{demandante}" 
+            and id_mensaje_canal_admins IS NULL and id_mensaje_canal_publicaciones IS NULL;""")
+            datos=cursor.fetchall()
+            ofertante=datos[0][0]
+            uid_evento_ofertado=datos[0][1]
+            cursor.execute(
+                f"""DELETE FROM propuestas where ofertante="{ofertante}" and demandante="{demandante}" and uid_evento_ofertado="{uid_evento_ofertado}" 
+                and id_mensaje_chat="{update.callback_query.message.message_id}";""")
+            relacion.commit()
+
+            reply_markup, texto = lista_propuestas_seleccionadas(demandante)
+
+            context.bot.edit_message_text(chat_id=str(update.callback_query.from_user.id),
+                                          message_id=str(update.callback_query.message.message_id),
+                                          text=texto,
+                                          reply_markup=reply_markup)
+
+
+        cursor.close()
+        relacion.close()
+    except BaseException as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
+            format(sys._getframe(1).f_code.co_name, uid_evento, update.callback_query, e))
+        cursor.close()
+        relacion.close()
+
+
+@autenticar_retorno
+def retorno_propuesta_enviar(update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    global cal_principal, cal_propuestas, bot, canalid
+    relacion = sqlite3.connect(path_sqlite3)
+    cursor = relacion.cursor()
+
+    try:
+        if update.callback_query.answer():
+            logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
+            accion= update.callback_query.data.split(';')
+            demandante = servicio_rest.GetEmailPorID(
+                servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+            cursor.execute(
+                f"""SELECT ofertante,uid_evento from oferta_demanda where accion="permutar" and demandante="{demandante}" 
+            and id_mensaje_canal_admins IS NULL and id_mensaje_canal_publicaciones IS NULL;""")
+            datos = cursor.fetchall()
+            ofertante = datos[0][0]
+            uid_evento_ofertado = datos[0][1]
+            cursor.execute(f"""SELECT uid_evento_propuesto from propuestas 
+                       where demandante="{demandante}" and ofertante="{ofertante}" and uid_evento_ofertado="{uid_evento_ofertado}" and id_mensaje_chat="{update.callback_query.message.message_id}";""")
+            id_eventos_aux = cursor.fetchall()
+            id_eventos = []
+            for id_evento in id_eventos_aux:
+                id_eventos.append(id_evento[0])
+            cursor.execute(
+                f"""UPDATE oferta_demanda  set accion="propuestas" where uid_evento="{uid_evento_ofertado}" and ofertante="{ofertante}" and demandante="{demandante}" and id_mensaje_canal_admins IS NULL and id_mensaje_canal_publicaciones IS NULL and accion="permutar";""")
+            relacion.commit()
+            evento_ofertado=cal_principal.get_evento(uid_evento=uid_evento_ofertado)
+            texto = "Propuestas las actividades siguientes por el usuario {}\n a cambio de la actividad {} en fecha {}\nEscoja una o rechace las propuestas:\n".format(
+                servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(demandante)),
+                evento_ofertado.get_summary(),
+                evento_ofertado.get_fecha_str()
+            )
+            fila_botones = []
+            columna_botones = []
+            for id in id_eventos:
+                evento = cal_principal.get_evento(uid_evento=id)
+                texto += "\n{} - {}".format(evento.get_summary(), evento.get_fecha_str())
+                if len(fila_botones) < 1:
+                    fila_botones.append(
+                        telegram.InlineKeyboardButton(
+                            text="{} - {}".format(evento.get_summary(), evento.get_fecha_str()),
+                            callback_data="{};{}".format("aceptar_propuesta", evento.get_uid())
+                        )
+                    )
+                    if id == id_eventos[-1]:
+                        columna_botones.append(fila_botones)
+                else:
+                    columna_botones.append(fila_botones)
+                    fila_botones.clear()
+                    fila_botones.append(
+                        telegram.InlineKeyboardButton(
+                            text="{} - {}".format(evento.get_summary(),
+                                                                    evento.get_fecha_str()),
+                            callback_data="{};{}".format("aceptar_propuesta", evento.get_uid())
+                        )
+                    )
+                    if id == id_eventos[-1]:
+                        columna_botones.append(list(fila_botones))
+
+
+            columna_botones.append([ telegram.InlineKeyboardButton(
+                text="Rechazar las propuestas", callback_data="{};{}".format("rechazar_propuesta", uid_evento_ofertado)
+            )])
+
+            reply_markup = telegram.InlineKeyboardMarkup(columna_botones)
+
+            borrar_mensaje(id_chat=update.callback_query.from_user.id,id_mensaje=update.callback_query.message.message_id)
+            mensaje = context.bot.send_message(
+                chat_id=servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(ofertante)),
+                text=texto,
+                reply_markup=reply_markup
+            )
+            cursor.execute(
+                f"""UPDATE propuestas set id_mensaje_chat=null where uid_evento="{uid_evento_ofertado}" and ofertante="{ofertante}" and demandante="{demandante}";""")
+            relacion.commit()
+
+        cursor.close()
+        relacion.close()
+    except BaseException as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
+            format(sys._getframe(1).f_code.co_name, uid_evento, update.callback_query, e))
+        cursor.close()
+        relacion.close()
+
+@autenticar_retorno
+def retorno_aceptar_propuesta(update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    global cal_principal, cal_propuestas, bot, canalid
+    relacion = sqlite3.connect(path_sqlite3)
+    cursor = relacion.cursor()
+    try:
+        if update.callback_query.answer():
+            logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
+            accion,uid_evento_aceptado= update.callback_query.data.split(';')
+            ofertante=servicio_rest.GetEmailPorID(
+                servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+
+
+
+        cursor.close()
+        relacion.close()
+    except BaseException as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
+            format(sys._getframe(1).f_code.co_name, uid_evento, update.callback_query, e))
+        cursor.close()
+        relacion.close()
+
+
+@autenticar_retorno
+def retorno_rechazar_propuesta(update: telegram.Update, context: telegram.ext.CallbackContext) -> None:
+    global cal_principal, cal_propuestas, bot, canalid
+    relacion = sqlite3.connect(path_sqlite3)
+    cursor = relacion.cursor()
+    try:
+        if update.callback_query.answer():
+            logging.getLogger(__name__).debug("Callback: " + update.callback_query.data)
+            accion,uid_evento_aceptado= update.callback_query.data.split(';')
+            ofertante = servicio_rest.GetEmailPorID(
+                servicio_rest.GetidRESTPorIDTel(update.callback_query.from_user.id))
+
+        cursor.close()
+        relacion.close()
+    except BaseException as e:
+        logging.getLogger(__name__).error(
+            "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
+            format(sys._getframe(1).f_code.co_name, uid_evento, update.callback_query, e))
+        cursor.close()
+        relacion.close()
+
 
 @autenticar_retorno
 def retorno_cancelar_cesion(update:telegram.Update, context:telegram.ext.CallbackContext)->None:
