@@ -131,6 +131,11 @@ if __name__ == '__main__':
     dispatcher.add_handler(callback_handler)
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_rechazar_propuesta,pattern="rechazar_propuesta")
     dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_aprobar_intercambio,pattern="aprobar_intercambio")
+    dispatcher.add_handler(callback_handler)
+    callback_handler=CallbackQueryHandler(telegram_tools.retorno_denegar_intercambio,pattern="denegar_intercambio")
+    dispatcher.add_handler(callback_handler)
+
     #Se comienza a recoger mensajes del bot.
     updater.start_polling()
 

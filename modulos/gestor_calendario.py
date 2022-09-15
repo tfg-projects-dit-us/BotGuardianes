@@ -297,7 +297,7 @@ class Evento:
                 return (True, lista_borrados,lista_asentados)
             else:
                 self.borrar_asistente(ofertante)
-                self.set_asistente(demandante,rol='REQ-PARTICIPANT')
+                self.set_asistente(demandante,rol='REQ-PARTICIPANT',tipo='INDIVIDUAL')
                 return (True,)
         except Exception as e:
             logging.getLogger(__name__).error(
