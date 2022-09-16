@@ -21,6 +21,7 @@ import sys
 from urllib.parse import urlparse
 import logging
 import itertools
+import zoneinfo
 
 import icalendar
 import pytz
@@ -382,7 +383,7 @@ class Evento:
         Returns:
             (str): Fecha en formato [dia-mes-año horas-minutos]
         """
-        return str(self.Event.vobject_instance.vevent.dtstart.value.strftime('%d-%m-%Y %H:%M'))
+        return str((self.Event.vobject_instance.vevent.dtstart.value).astimezone(zoneinfo.ZoneInfo('Europe/Madrid')).strftime('%d-%m-%Y %H:%M'))
 
     def get_fecha_datetime(self):
         """
@@ -391,7 +392,7 @@ class Evento:
         Returns:
             (datetime.datetime):Fecha de inicio del evento
         """
-        return self.Event.vobject_instance.vevent.dtstart.value
+        return self.Event.vobject_instance.vevent.dtstart.value.astimezone(zoneinfo.ZoneInfo('Europe/Madrid'))
 
     def get_sitios_libres(self):
         """
