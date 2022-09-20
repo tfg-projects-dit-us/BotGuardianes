@@ -383,7 +383,8 @@ class Evento:
         Returns:
             (str): Fecha en formato [dia-mes-año horas-minutos]
         """
-        return str((self.Event.vobject_instance.vevent.dtstart.value).astimezone(zoneinfo.ZoneInfo('Europe/Madrid')).strftime('%d-%m-%Y %H:%M'))
+        fecha = datetime.datetime.combine(self.Event.vobject_instance.vevent.dtstart.value, datetime.datetime.min.time())
+        return str(fecha.astimezone(zoneinfo.ZoneInfo('Europe/Madrid')).strftime('%d-%m-%Y %H:%M'))
 
     def get_fecha_datetime(self):
         """
@@ -392,7 +393,8 @@ class Evento:
         Returns:
             (datetime.datetime):Fecha de inicio del evento
         """
-        return self.Event.vobject_instance.vevent.dtstart.value.astimezone(zoneinfo.ZoneInfo('Europe/Madrid'))
+        fecha=datetime.datetime.combine(self.Event.vobject_instance.vevent.dtstart.value, datetime.datetime.min.time())
+        return fecha.astimezone(zoneinfo.ZoneInfo('Europe/Madrid'))
 
     def get_sitios_libres(self):
         """
@@ -635,10 +637,10 @@ class Calendario:
                 self.calendario.save_event(evento_encontrado.data)
                 return True
         except caldav.lib.error.NotFoundError as e:
-            logging.getLogger( __name__ ).debug("Evento {} no existente en calendario. Función ejecutada {}".format(evento.get_uid(),
+            logging.getLogger( __name__ ).info("Evento {} no existente en calendario. Función ejecutada {}".format(evento.get_uid(),
                                                                                               sys._getframe(
                                                                                                   1).f_code.co_name))
-            logging.getLogger( __name__ ).debug("Evento a introducir {} en calendario {} con data {}".format(str(evento),
+            logging.getLogger( __name__ ).info("Evento a introducir {} en calendario {} con data {}".format(str(evento),
                                                                                        str(self.calendario.canonical_url),
                                                                                        str(evento.Event.data)))
             self.calendario.save_event(evento.Event.data)

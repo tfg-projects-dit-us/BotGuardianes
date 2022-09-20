@@ -90,7 +90,7 @@ def InsertaTelegramID(idusuario:str|int,chatid:str|int)->str|None:
                            data =str(chatid))
 
     except requests.exceptions.HTTPError as e:
-        logging.getLogger(__name__).error(
+        logging.getLogger(__name__).info(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
 
@@ -115,7 +115,7 @@ def GetIDPorEmail(email:str)->str:
         logging.getLogger( __name__ ).debug(respuesta.text)
         idrest=str(respuesta.text)
     except requests.exceptions.HTTPError as e:
-        logging.getLogger(__name__).error(
+        logging.getLogger(__name__).info(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
 
@@ -145,7 +145,7 @@ def GetNombrePorID(id:str|int)->str:
         logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuestajson))
         nombre=str(respuestajson.get('firstName')) + " " + str(respuestajson.get('lastNames'))
     except requests.exceptions.HTTPError as e:
-        logging.getLogger( __name__ ).error("Error obteniendo nombre del doctor " + str(e))
+        logging.getLogger( __name__ ).info("Error obteniendo nombre del doctor " + str(e))
         raise Exception
     if respuesta.status_code==200:
         return nombre
@@ -171,7 +171,7 @@ def GetidRESTPorIDTel(id:str|int)->str:
         idRest=str(respuesta.text)
         logging.getLogger( __name__ ).debug("Respuesta de idRESTPorIDTel: " +str(respuesta.text))
     except requests.exceptions.HTTPError as e:
-        logging.getLogger(__name__).error(
+        logging.getLogger(__name__).info(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
     if respuesta.status_code==200:
@@ -199,7 +199,7 @@ def GetEmailPorID(id:str|int)->str|None:
         logging.getLogger( __name__ ).debug("Respuesta de NombrePorID: " +str(respuestajson))
         email=str(respuestajson.get('email'))
     except requests.exceptions.HTTPError as e:
-        logging.getLogger(__name__).error(
+        logging.getLogger(__name__).info(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
 
@@ -233,7 +233,7 @@ def GetRolesPorEmail(mail:str)->list[str]:
         if "Could not fing a doctor" in respuesta.text:
             return "Email not found"
     except requests.exceptions.HTTPError as e:
-        logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
+        logging.getLogger( __name__ ).info("Error obteniendo roles del doctor " + str(e))
         raise Exception
 
     except Exception as e:
@@ -264,7 +264,7 @@ def GetidTelPoridREST(id:str|int)->str:
         idTel= str(respuesta.text)
         logging.getLogger(__name__).debug("Respuesta de idRESTPorIDTel: " + str(respuesta.text))
     except requests.exceptions.HTTPError as e:
-        logging.getLogger(__name__).error(
+        logging.getLogger(__name__).info(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
     if respuesta.status_code == 200:
@@ -294,7 +294,7 @@ def GetAdmins()->list[str]:
 
         return admines
     except requests.exceptions.HTTPError as e:
-        logging.getLogger( __name__ ).error("Error obteniendo roles del doctor " + str(e))
+        logging.getLogger( __name__ ).info("Error obteniendo roles del doctor " + str(e))
         raise Exception
 
     except Exception as e:
@@ -323,7 +323,7 @@ def SetEvento(evento_data:str):
                                  data=str(evento_data)
                                  )
     except requests.exceptions.HTTPError as e:
-        logging.getLogger(__name__).error(
+        logging.getLogger(__name__).info(
             "Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name, e))
         raise Exception
 
