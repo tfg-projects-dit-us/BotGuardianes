@@ -383,8 +383,9 @@ class Evento:
         Returns:
             (str): Fecha en formato [dia-mes-año horas-minutos]
         """
-        fecha = datetime.datetime.combine(self.Event.vobject_instance.vevent.dtstart.value, datetime.datetime.min.time())
-        return str(fecha.astimezone(zoneinfo.ZoneInfo('Europe/Madrid')).strftime('%d-%m-%Y %H:%M'))
+        fecha:datetime.datetime=self.Event.vobject_instance.vevent.dtstart.value
+        fecha_madrid=fecha.astimezone(tz=pytz.timezone('Europe/Madrid'))
+        return fecha_madrid.strftime('%d-%m-%Y %H:%M')
 
     def get_fecha_datetime(self):
         """
@@ -393,8 +394,9 @@ class Evento:
         Returns:
             (datetime.datetime):Fecha de inicio del evento
         """
-        fecha=datetime.datetime.combine(self.Event.vobject_instance.vevent.dtstart.value, datetime.datetime.min.time())
-        return fecha.astimezone(zoneinfo.ZoneInfo('Europe/Madrid'))
+        fecha: datetime.datetime = self.Event.vobject_instance.vevent.dtstart.value
+        fecha_madrid = fecha.astimezone(tz=pytz.timezone('Europe/Madrid'))
+        return fecha_madrid
 
     def get_sitios_libres(self):
         """
@@ -686,8 +688,8 @@ class Calendario:
                     return self.get_evento(uid_evento=uid_evento)
 
         except Exception as e:
-            logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
-            return None
+            logging.getLogger( __name__ ).info("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
+            raise Exception
 
     def cancelar_evento(self, correo_usuario: str, uid_evento: str):
         """

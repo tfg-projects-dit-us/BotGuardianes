@@ -483,6 +483,10 @@ def guardias_pendientes(update:telegram.Update, context:telegram.ext.CallbackCon
                 elif accion=="intercambiar":
                     mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id, accion="cancelar_intercambio")
                     actividad_encontrada=True
+                elif accion == "enviado":
+                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id,
+                                         accion="cancelar_intercambio")
+                    actividad_encontrada = True
 
 
             for e in lista_eventos_demandados:
@@ -496,6 +500,10 @@ def guardias_pendientes(update:telegram.Update, context:telegram.ext.CallbackCon
                     mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id,
                                          accion="cancelar_intercambio")
                     actividad_encontrada=True
+                elif accion == "enviado":
+                    mostrar_datos_evento("completo", evento=e, id_chat=update.message.chat_id,
+                                         accion="cancelar_intercambio")
+                    actividad_encontrada = True
 
             if actividad_encontrada==False:
                 context.bot.send_message(chat_id=update.message.chat_id,
@@ -663,6 +671,7 @@ def ceder_evento(uid:str,attendee:str)->gestor_calendario.Evento|None:
     except Exception as e:
         logging.getLogger( __name__ ).error("Excepción en función {}. Motivo: {}".format(sys._getframe(1).f_code.co_name,e ))
         return None
+
 
 def intercambiar_evento(uid:str,attendee:str)->gestor_calendario.Evento|None:
     """
@@ -2045,7 +2054,6 @@ def retorno_cancelar_intercambio(update:telegram.Update, context:telegram.ext.Ca
                 if demandante is not None:
                     if demandante == correo:
                         cancelado=cancelar_propuesta_evento(uid_evento,demandante)
-
                     elif ofertante == correo:
                         cancelado=cancelar_propuesta_evento(uid_evento,demandante)
                         cancelado=cancelar_propuesta_evento(uid_evento,ofertante)
@@ -2070,9 +2078,9 @@ def retorno_cancelar_intercambio(update:telegram.Update, context:telegram.ext.Ca
                                                      text="Se ha cancelado la propuesta de intercambio. Ha sido usted excluido de la propuesta de {} en fecha {}".format(
                                                          cancelado.get_summary(), cancelado.get_fecha_str())
                                                      )
-                            idmensaje = mostrar_datos_evento("resumen", cancelado, canalid, "intercambiar")
+                            idmensaje = mostrar_datos_evento("resumen", cancelado, canalid, "permutar")
                             cursor.execute(
-                                f"""UPDATE oferta_demanda set id_mensaje_canal_admins=null,demandante=null,id_mensaje_canal_publicaciones="{idmensaje}" where uid_evento="{uid_evento}" and ofertante="{ofertante}" and accion="ceder" and demandante="{correo}";""")
+                                f"""UPDATE oferta_demanda set id_mensaje_canal_admins=null,demandante=null,uid_evento_propuesta_intercambio=null,id_mensaje_canal_publicaciones="{idmensaje}",accion="intercambiar" where uid_evento="{uid_evento}" and ofertante="{ofertante}" and demandante="{correo}";""")
                             relacion.commit()
                         elif ofertante == correo:
                             context.bot.send_message(chat_id=servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(demandante)),
@@ -2084,7 +2092,9 @@ def retorno_cancelar_intercambio(update:telegram.Update, context:telegram.ext.Ca
                                                          cancelado.get_summary(), cancelado.get_fecha_str())
                                                      )
                             cursor.execute(
-                                f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{correo}" and demandante="{demandante}"and accion="ceder";""")
+                                f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{correo}" and demandante="{demandante}"and accion="intercambiar";""")
+                            cursor.execute(
+                                f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{correo}" and demandante="{demandante}"and accion="enviado";""")
                             relacion.commit()
                     elif ofertante == correo:
                         context.bot.send_message(chat_id=servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(ofertante)),
@@ -2092,7 +2102,9 @@ def retorno_cancelar_intercambio(update:telegram.Update, context:telegram.ext.Ca
                                                      cancelado.get_summary(), cancelado.get_fecha_str())
                                                  )
                         cursor.execute(
-                            f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{correo}" and accion="ceder";""")
+                            f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{correo}" and accion="intercambiar";""")
+                        cursor.execute(
+                            f"""DELETE FROM oferta_demanda where uid_evento="{uid_evento}" and ofertante="{correo}" and accion="enviado";""")
                         relacion.commit()
 
 
