@@ -328,6 +328,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#modulos.servicio_rest.SetEvento" class="md-nav__link">
+    SetEvento()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#modulos.servicio_rest.start" class="md-nav__link">
     start()
   </a>
@@ -460,6 +467,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#modulos.servicio_rest.SetEvento" class="md-nav__link">
+    SetEvento()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#modulos.servicio_rest.start" class="md-nav__link">
     start()
   </a>
@@ -554,10 +568,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">276</span>
 <span class="normal">277</span>
 <span class="normal">278</span>
 <span class="normal">279</span>
@@ -582,7 +593,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">298</span>
 <span class="normal">299</span>
 <span class="normal">300</span>
-<span class="normal">301</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetAdmins</span><span class="p">()</span><span class="o">-&gt;</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetAdmins</span><span class="p">()</span><span class="o">-&gt;</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene una lista de administradores en la BBDD del servicio REST</span>
 
@@ -603,7 +617,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
         <span class="k">return</span> <span class="n">admines</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Error obteniendo roles del doctor &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Error obteniendo roles del doctor &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
 
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -675,10 +689,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">182</span>
 <span class="normal">183</span>
 <span class="normal">184</span>
 <span class="normal">185</span>
@@ -699,7 +710,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">200</span>
 <span class="normal">201</span>
 <span class="normal">202</span>
-<span class="normal">203</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetEmailPorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="o">|</span><span class="kc">None</span><span class="p">:</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetEmailPorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="o">|</span><span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene el correo de un usuario a partir de su ID del servicio REST</span>
 
@@ -719,7 +733,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Respuesta de NombrePorID: &quot;</span> <span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">respuestajson</span><span class="p">))</span>
         <span class="n">email</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">respuestajson</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">))</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Excepción en función </span><span class="si">{}</span><span class="s2">. Motivo: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
 
@@ -788,10 +802,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
@@ -814,7 +825,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">119</span>
 <span class="normal">120</span>
 <span class="normal">121</span>
-<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetIDPorEmail</span><span class="p">(</span><span class="n">email</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetIDPorEmail</span><span class="p">(</span><span class="n">email</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obteiene la ID del usuario en el servicio REST a partir de su correo electrónico</span>
 
@@ -833,7 +847,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="n">idrest</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Excepción en función </span><span class="si">{}</span><span class="s2">. Motivo: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
 
@@ -905,10 +919,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span>
 <span class="normal">131</span>
@@ -930,7 +941,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
-<span class="normal">150</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetNombrePorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetNombrePorID</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene el nombre y apellido de un usuario en el servicio REST a partir de su ID</span>
 
@@ -950,7 +964,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Respuesta de NombrePorID: &quot;</span> <span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">respuestajson</span><span class="p">))</span>
         <span class="n">nombre</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">respuestajson</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">respuestajson</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lastNames&#39;</span><span class="p">))</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Error obteniendo nombre del doctor &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Error obteniendo nombre del doctor &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
     <span class="k">if</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">status_code</span><span class="o">==</span><span class="mi">200</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">nombre</span>
@@ -1020,10 +1034,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
 <span class="normal">210</span>
 <span class="normal">211</span>
 <span class="normal">212</span>
@@ -1055,7 +1066,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">238</span>
 <span class="normal">239</span>
 <span class="normal">240</span>
-<span class="normal">241</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetRolesPorEmail</span><span class="p">(</span><span class="n">mail</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetRolesPorEmail</span><span class="p">(</span><span class="n">mail</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene los roles de un usuario</span>
 
@@ -1082,7 +1096,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
         <span class="k">if</span> <span class="s2">&quot;Could not fing a doctor&quot;</span> <span class="ow">in</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;Email not found&quot;</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Error obteniendo roles del doctor &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Error obteniendo roles del doctor &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
 
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -1155,10 +1169,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
@@ -1181,7 +1192,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">174</span>
 <span class="normal">175</span>
 <span class="normal">176</span>
-<span class="normal">177</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidRESTPorIDTel</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidRESTPorIDTel</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene la ID del servicio REST de un usuario a partir de su ID en Telegram</span>
 
@@ -1201,7 +1215,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
         <span class="n">idRest</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Respuesta de idRESTPorIDTel: &quot;</span> <span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Excepción en función </span><span class="si">{}</span><span class="s2">. Motivo: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
     <span class="k">if</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">status_code</span><span class="o">==</span><span class="mi">200</span><span class="p">:</span>
@@ -1272,10 +1286,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">246</span>
 <span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
@@ -1299,7 +1310,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">267</span>
 <span class="normal">268</span>
 <span class="normal">269</span>
-<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidTelPoridREST</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">GetidTelPoridREST</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Obtiene la ID de telegram de un usuario a partir de su ID del servicio REST</span>
 
@@ -1320,7 +1334,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
         <span class="n">idTel</span><span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Respuesta de idRESTPorIDTel: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Excepción en función </span><span class="si">{}</span><span class="s2">. Motivo: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
     <span class="k">if</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
@@ -1401,10 +1415,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">73</span>
 <span class="normal">74</span>
 <span class="normal">75</span>
 <span class="normal">76</span>
@@ -1426,7 +1437,10 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">92</span>
 <span class="normal">93</span>
 <span class="normal">94</span>
-<span class="normal">95</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">InsertaTelegramID</span><span class="p">(</span><span class="n">idusuario</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">,</span><span class="n">chatid</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="o">|</span><span class="kc">None</span><span class="p">:</span>
+<span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">InsertaTelegramID</span><span class="p">(</span><span class="n">idusuario</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">,</span><span class="n">chatid</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">int</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">str</span><span class="o">|</span><span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Inserta la ID de telegram del usuario, utilizando la ID REST del mismo</span>
 
@@ -1446,7 +1460,7 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
                            <span class="n">data</span> <span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">chatid</span><span class="p">))</span>
 
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Excepción en función </span><span class="si">{}</span><span class="s2">. Motivo: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">Exception</span>
 
@@ -1462,8 +1476,122 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 
 
 
+<h2 id="modulos.servicio_rest.SetEvento" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">SetEvento</span><span class="p">(</span><span class="n">evento_data</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Función para enviar el evento final a la API REST para que modifique el calendario de asignaciones</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>evento_data</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>Cadena con los datos del evento en formato ical</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+          </td>
+          <td><p>(bool) : Verdadero si lo hizo bien, falso si no</p></td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">SetEvento</span><span class="p">(</span><span class="n">evento_data</span><span class="p">:</span><span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Función para enviar el evento final a la API REST para que modifique el calendario de asignaciones</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        evento_data: Cadena con los datos del evento en formato ical</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        (bool) : Verdadero si lo hizo bien, falso si no</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">respuesta</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Obtenemos la respuesta de solicitar los roles</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url_eventos</span><span class="p">,</span>
+                                 <span class="n">auth</span><span class="o">=</span><span class="n">HTTPBasicAuth</span><span class="p">(</span><span class="n">usuario</span><span class="p">,</span> <span class="n">password</span><span class="p">),</span>
+                                 <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">},</span>
+                                 <span class="n">data</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">evento_data</span><span class="p">)</span>
+                                 <span class="p">)</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Excepción en función </span><span class="si">{}</span><span class="s2">. Motivo: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">Exception</span>
+
+    <span class="k">if</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">text</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
 <h2 id="modulos.servicio_rest.start" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">start</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">contrasena</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="p">,</span> <span class="n">get_nombre_por_id_rest</span><span class="p">,</span> <span class="n">get_id_rest_por_id_tel</span><span class="p">,</span> <span class="n">get_rol_por_email</span><span class="p">,</span> <span class="n">get_id_tel_por_id_rest</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">start</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">contrasena</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="p">,</span> <span class="n">get_nombre_por_id_rest</span><span class="p">,</span> <span class="n">get_id_rest_por_id_tel</span><span class="p">,</span> <span class="n">get_rol_por_email</span><span class="p">,</span> <span class="n">get_id_tel_por_id_rest</span><span class="p">,</span> <span class="n">put_evento</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1563,13 +1691,22 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
               <em>required</em>
           </td>
         </tr>
+        <tr>
+          <td><code>put_evento</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>URL para enviar el evento a la API REST.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
     </tbody>
   </table>
 
       <details class="quote">
         <summary>Source code in <code>modulos\servicio_rest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">35</span>
-<span class="normal">36</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">36</span>
 <span class="normal">37</span>
 <span class="normal">38</span>
 <span class="normal">39</span>
@@ -1601,9 +1738,12 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="normal">65</span>
 <span class="normal">66</span>
 <span class="normal">67</span>
-<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">user</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">contrasena</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">user</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">contrasena</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">inserta_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="n">get_id_por_email</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span>
           <span class="n">get_nombre_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">get_id_rest_por_id_tel</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span>
-          <span class="n">get_rol_por_email</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">get_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+          <span class="n">get_rol_por_email</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">get_id_tel_por_id_rest</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">put_evento</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Función para inicializar  el módulo. Rellena las urls de acceso a la API REST y las credenciales.</span>
 
@@ -1616,15 +1756,17 @@ Para poder escribir en ellas, es necesario declararla como <code>global</code> d
 <span class="sd">        get_id_rest_por_id_tel: URL para obtener la ID del servicio REST a partir de la ID de Telegram</span>
 <span class="sd">        get_rol_por_email: URL para obtener los roles de un doctor a partir de su email</span>
 <span class="sd">        get_id_tel_por_id_rest: URL para obtener la ID de Telegram a partir de la ID del servicio REST</span>
+<span class="sd">        put_evento: URL para enviar el evento a la API REST.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">global</span> <span class="n">url_inserta</span><span class="p">,</span> <span class="n">url_getID</span><span class="p">,</span><span class="n">usuario</span><span class="p">,</span><span class="n">password</span><span class="p">,</span><span class="n">url_getnombre</span><span class="p">,</span><span class="n">url_getIDrestporIDtel</span><span class="p">,</span> <span class="n">url_getroles</span><span class="p">,</span><span class="n">url_getIDtelporIDrest</span>
+    <span class="k">global</span> <span class="n">url_inserta</span><span class="p">,</span> <span class="n">url_getID</span><span class="p">,</span><span class="n">usuario</span><span class="p">,</span><span class="n">password</span><span class="p">,</span><span class="n">url_getnombre</span><span class="p">,</span><span class="n">url_getIDrestporIDtel</span><span class="p">,</span> <span class="n">url_getroles</span><span class="p">,</span><span class="n">url_getIDtelporIDrest</span><span class="p">,</span><span class="n">url_eventos</span>
     <span class="n">url_inserta</span><span class="o">=</span><span class="n">inserta_id_tel_por_id_rest</span>
     <span class="n">url_getID</span><span class="o">=</span> <span class="n">get_id_por_email</span>
     <span class="n">url_getnombre</span><span class="o">=</span><span class="n">get_nombre_por_id_rest</span>
     <span class="n">url_getIDrestporIDtel</span><span class="o">=</span><span class="n">get_id_rest_por_id_tel</span>
     <span class="n">url_getroles</span><span class="o">=</span><span class="n">get_rol_por_email</span>
     <span class="n">url_getIDtelporIDrest</span><span class="o">=</span><span class="n">get_id_tel_por_id_rest</span>
+    <span class="n">url_eventos</span><span class="o">=</span><span class="n">put_evento</span>
     <span class="n">usuario</span><span class="o">=</span><span class="n">user</span>
     <span class="n">password</span><span class="o">=</span><span class="n">contrasena</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span> <span class="vm">__name__</span> <span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Inicializado el objeto REST con valores: &quot;</span> <span class="o">+</span>
