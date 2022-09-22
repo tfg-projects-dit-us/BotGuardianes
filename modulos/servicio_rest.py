@@ -98,7 +98,7 @@ def InsertaTelegramID(idusuario:str|int,chatid:str|int)->str|None:
         return respuesta.text
 def GetIDPorEmail(email:str)->str:
     """
-    Obteiene la ID del usuario en el servicio REST a partir de su correo electrónico
+    Obtiene la ID del usuario en el servicio REST a partir de su correo electrónico
 
     Args:
         email: Correo electrónico del usuario

@@ -103,8 +103,7 @@ if __name__ == '__main__':
     dispatcher.add_handler(gdisp_handler)
     gdisp_handler = MessageHandler(Filters.regex('Actividades pendientes'), telegram_tools.guardias_pendientes)
     dispatcher.add_handler(gdisp_handler)
-    gdisp_handler = MessageHandler(Filters.regex('Aprobar o denegar cambios'), telegram_tools.guardias_aprobar_denegar)
-    dispatcher.add_handler(gdisp_handler)
+
 
     #Se agregan retornos de botones contextuales de Telegram
     callback_handler=CallbackQueryHandler(telegram_tools.retorno_ceder,pattern="ceder")
