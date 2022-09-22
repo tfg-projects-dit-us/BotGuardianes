@@ -311,7 +311,7 @@ def SetEvento(evento_data:str):
         evento_data: Cadena con los datos del evento en formato ical
 
     Returns:
-        (bool) : Verdadero si lo hizo bien, falso si no
+        (bool): Verdadero si lo hizo bien, falso si no
 
     """
     respuesta = None

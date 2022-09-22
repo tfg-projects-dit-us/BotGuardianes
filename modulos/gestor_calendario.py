@@ -126,7 +126,7 @@ class Evento:
         """
         return str(self.Event.vobject_instance.vevent.uid.value)
 
-    def get_asistentes(self,rol:str="",tipo=""):
+    def get_asistentes(self,rol:str="",tipo:str=""):
         """
         Obtiene un diccionario de diccionarios, con clave el correo del usuario
 

@@ -1050,7 +1050,7 @@ def lista_propuestas_seleccionadas(demandante:str, eventos_ya_propuestos:list[st
         ofertante: Correo del ofertante para que no se puedan proponer eventos que el ofertante ya esté participando.
 
     Returns:
-        (telegram.InlineKeyboardMarkup,str) : Devuelve el reply_markup y la cadena de texto del mensaje.
+        (telegram.InlineKeyboardMarkup,str): Devuelve el reply_markup y la cadena de texto del mensaje.
     """
     global cal_principal
     reply_markup:telegram.InlineKeyboardMarkup=[]
@@ -1312,8 +1312,6 @@ def retorno_propuesta_deshacer(update: telegram.Update, context: telegram.ext.Ca
     Args:
         update: Objeto con parámetros del mensaje que envía el usuario al bot
         context: Objeto con funciones de contexto del bot de telegram
-
-    Returns:
 
     """
     global cal_principal, cal_propuestas, bot, canalid
