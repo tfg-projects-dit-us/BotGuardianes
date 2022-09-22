@@ -23,7 +23,21 @@ de módulos instalados de Python
 Los tests funcionan en el testrunner de Pycharm, y también con el binario de pytest
 
 Es importante crear un fichero de configuración en /data/config/config.yaml 
-con los datos rellenos para poder desarrollar la aplicación.
+con los datos rellenos para poder desarrollar la aplicación. 
+
+Basta con copiar el config.yaml de la carpeta config_ejemplo y sustituir los valores necesarios
+
+Para crear un bot nuevo basta con seguir la [guia de creacion de bot](https://core.telegram.org/bots#6-botfather)
+
+Desde Botfather obtenemos el token del bot.
+
+También hay que crear dos canales de Telegram, uno es el de Publicaciones de Guardias y el otro de Publicaciones para administradores.
+
+Para crear un canal en Telegram, se pulsa en Nuevo Canal en la interfaz de Telegram. Para obtener la ID, basta con copiar el enlace de un mensaje del canal ya creado. 
+Tendrá la estructura de https://t.me/c/ID_CANAL/ID_MENSAJE. Para poder utilizarlo en la configuración, se coloca -100 delante de la ID obtenida.
+Ejemplo: -100XXXXXXXXXX
+
+En la sección de "Producción" está explicado cada parámetro.
 
 En el fichero REST_calendarios.postman_collection.json se encuentran las URL para hacer uso de la API REST. 
 Si se quiere hacer uso de más secciones de la API, este fichero es necesario
@@ -34,7 +48,7 @@ navegar hasta la carpeta donde se sitúa el repositorio y ejecutar
 
 ``mkdocs build``
 
-Esto generará la documentación en la carpeta site (omitida para no subirla al repositorio)
+Esto generará la documentación en la carpeta site (omitida en .gitignore para no subirla al repositorio)
 
 Para alojarla en el Github Pages, solo hay que enviar el comando
 

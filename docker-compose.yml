@@ -1,7 +1,7 @@
 version: '3'
 services:
   botguardianes:
-    image: luimarpen/botguardianes
+    image: luimarpen/botguardianes:latest
     restart: always
     volumes:
       - botguardianes:/BotGuardianes/data
