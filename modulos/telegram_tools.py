@@ -1229,7 +1229,7 @@ def retorno_permutar(update:telegram.Update, context:telegram.ext.CallbackContex
                     context.bot.send_message(chat_id=update.callback_query.from_user.id,
                                              text="Se ha demandado para intercambio el evento <b>{}</b> - <i>{}</i>".format(
                                                  permutado.get_summary(), permutado.get_fecha_str()),
-                                             parse_mode="HMTL")
+                                             parse_mode="HTML")
 
                     reply_markup,texto=lista_propuestas_seleccionadas(correo)
                     mensaje=context.bot.send_message(
