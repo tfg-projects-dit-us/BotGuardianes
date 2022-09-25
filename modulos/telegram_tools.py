@@ -383,6 +383,7 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
     """
     reply_markup=[]
     mensaje:telegram.Message=None
+    cabecera=""
     texto = ""
     if accion == "cancelar_cesion":
         texto = "Cancelar propuesta de cambio"
@@ -390,12 +391,14 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
         texto = "Cancelar propuesta de intercambio"
     if accion == "tomar":
         texto = "Demandar esta actividad cedida"
+        cabecera="<b>Cesión de actividad</b>\n"
     if accion == "ceder":
         texto = "Ofrecer esta actividad"
     if accion=="aprobar_denegar":
         texto= "Aprobar este cambio de actividad"
     if accion=="permutar":
         texto="Demandar esta actividad para intercambio"
+        cabecera="<b>Intercambio de actividad</b>\n"
     if accion=="intercambiar":
         texto="Ofrecer esta actividad para intercambio"
 
@@ -407,7 +410,7 @@ def mostrar_datos_evento(modo:str, evento:gestor_calendario.Evento, id_chat:str,
                 )
                 ]]
 
-        cadena = "<b>{}</b>\nFecha: {}\n".format(evento.get_summary(), evento.get_fecha_str())
+        cadena = cabecera+"<b>{}</b>\nFecha: {}\n".format(evento.get_summary(), evento.get_fecha_str())
         if accion!="nada":
             reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
             mensaje=bot.send_message(chat_id=id_chat, text=cadena, reply_markup=reply_markup,parse_mode="HTML")
