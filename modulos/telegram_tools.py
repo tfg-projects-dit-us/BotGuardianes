@@ -754,14 +754,14 @@ def notificar_aprobar_propuesta_intercambio(ofertante: str, demandante:str, even
         id_chat=servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(ofertante))
         if id_chat != "Email not found" and id_chat!='0':
             bot.send_message(chat_id=id_chat,
-                             text="El intercambio ha sido aprobado.\n\nHa sido usted excluido de la actividad <b>{}</b> - </i>{}</i>\nHa sido incluido en la actividad <b>{}</b> - </i>{}</i>"
+                             text="El intercambio ha sido aprobado.\n\nHa sido usted excluido de la actividad <b>{}</b> - <i>{}</i>\nHa sido incluido en la actividad <b>{}</b> - <i>{}</i>"
                              .format(evento_ofertado.get_summary(), evento_ofertado.get_fecha_str(),evento_propuesto.get_summary(),evento_propuesto.get_fecha_str()),
                              parse_mode="HTML")
 
         id_chat = servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(demandante))
         if id_chat != "Email not found" and id_chat != '0':
             bot.send_message(chat_id=id_chat,
-                             text="El intercambio ha sido aprobado.\n\nHa sido usted incluido en la actividad <b>{}</b> - </i>{}</i>\nHa sido excluido de la actividad <b>{}</b> - </i>{}</i>"
+                             text="El intercambio ha sido aprobado.\n\nHa sido usted incluido en la actividad <b>{}</b> - <i>{}</i>\nHa sido excluido de la actividad <b>{}</b> - <i>{}</i>"
                              .format(
                                  evento_ofertado.get_summary(), evento_ofertado.get_fecha_str(),evento_propuesto.get_summary(),evento_propuesto.get_fecha_str()),
                              parse_mode="HTML")
@@ -792,14 +792,14 @@ def notificar_denegar_propuesta_intercambio(ofertante: str, demandante:str, even
         id_chat=servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(ofertante))
         if id_chat != "Email not found" and id_chat!='0':
             bot.send_message(chat_id=id_chat,
-                             text="El cambio ha sido denegado. Mantiene usted su actividad <b>{}</b> - </i>{}</i>".
+                             text="El cambio ha sido denegado. Mantiene usted su actividad <b>{}</b> - <i>{}</i>".
                              format(evento_ofertado.get_summary(), evento_ofertado.get_fecha_str()),
                              parse_mode="HTML")
 
         id_chat = servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(demandante))
         if id_chat != "Email not found" and id_chat != '0':
             bot.send_message(chat_id=id_chat,
-                             text="El cambio ha sido denegado. Mantiene usted su actividad <b>{}</b> - </i>{}</i>"
+                             text="El cambio ha sido denegado. Mantiene usted su actividad <b>{}</b> - <i>{}</i>"
                              .format(
                                  evento_propuesto.get_summary(), evento_propuesto.get_fecha_str()),
                              parse_mode="HTML")
