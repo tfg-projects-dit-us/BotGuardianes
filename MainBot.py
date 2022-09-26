@@ -98,6 +98,9 @@ if __name__ == '__main__':
     botones_handler = CommandHandler('botones', telegram_tools.botones)
     # Añadimos función de Actividades disponibles
     dispatcher.add_handler(botones_handler)
+    botones_handler = CommandHandler('suscripcion', telegram_tools.suscripcion_canales)
+    # Añadimos función de Actividades disponibles
+    dispatcher.add_handler(botones_handler)
 
     gdisp_handler = MessageHandler(Filters.regex('Actividades propias'), telegram_tools.guardias_propias)
     dispatcher.add_handler(gdisp_handler)

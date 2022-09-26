@@ -196,33 +196,40 @@ def registro_paso2(update:telegram.Update, context:telegram.ext.CallbackContext)
     if ("@" in update.message.text):
 
         try:
-            # Aqui pedimos a la API Rest la ID del usuario con su email
-            respuesta = servicio_rest.GetIDPorEmail(email=update.message.text)
-            logging.getLogger( __name__ ).debug("Respuesta a GETIDPorEmail es:" + str(respuesta) + " tipo " + str(respuesta.isdigit()))
-            if respuesta.isdigit():
-                idusuario = respuesta
-            elif respuesta=="Email not found":
-                context.bot.send_message(chat_id=update.message.chat_id,
-                                        text="Su correo no ha sido encontrado en la plataforma.\nPor favor, consulte al "
-                                             "administrador de su sistema para comprobar que sus datos estan adecuadamente "
-                                             "agregados")
-                return ConversationHandler.END
-            if idusuario!= False:
-                logging.getLogger( __name__ ).debug(idusuario)
-                logging.getLogger( __name__ ).debug(update.effective_chat.id)
-                respuesta = servicio_rest.InsertaTelegramID(idusuario=str(idusuario), chatid=update.effective_chat.id)
-                logging.getLogger( __name__ ).debug("Valor de respuesta " + str(respuesta))
-                # Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso,
-                # enviaríamos el id
-                if respuesta=='ID de telegram actualizado':
+
+            id_rest=servicio_rest.GetidRESTPorIDTel(update.effective_user.id)
+            if id_rest!="Email not found":
+                servicio_rest.InsertaTelegramID(id_rest,"0")
+                id_rest = servicio_rest.GetidRESTPorIDTel(update.effective_user.id)
+
+            if id_rest=="Email not found":
+                respuesta = servicio_rest.GetIDPorEmail(email=update.message.text)# Aqui pedimos a la API Rest la ID del usuario con su email
+                logging.getLogger( __name__ ).debug("Respuesta a GETIDPorEmail es:" + str(respuesta) + " tipo " + str(respuesta.isdigit()))
+                if respuesta.isdigit():
+                    idusuario = respuesta
+                elif respuesta=="Email not found":
                     context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="Ha sido identificado en la plataforma, {}".format(servicio_rest.GetNombrePorID(idusuario)))  # Imprimimos su nombre
-                else:
-                    context.bot.send_message(chat_id=update.message.chat_id,
-                                             text="Ha habido un error en la plataforma\nContacte por favor con soporte")
-                suscripcion_canales(update,context)
-                botones(update,context)
-                return ConversationHandler.END
+                                            text="Su correo no ha sido encontrado en la plataforma.\nPor favor, consulte al "
+                                                 "administrador de su sistema para comprobar que sus datos estan adecuadamente "
+                                                 "agregados")
+                    return ConversationHandler.END
+                if idusuario!= False:
+                    logging.getLogger( __name__ ).debug(idusuario)
+                    logging.getLogger( __name__ ).debug(update.effective_chat.id)
+                    respuesta = servicio_rest.InsertaTelegramID(idusuario=str(idusuario), chatid=update.effective_chat.id)
+                    logging.getLogger( __name__ ).debug("Valor de respuesta " + str(respuesta))
+                    # Aqui haríamos la consulta a REST para preguntar si existe ese correo electrónico. Si es el caso,
+                    # enviaríamos el id
+                    if respuesta=='ID de telegram actualizado':
+                        context.bot.send_message(chat_id=update.message.chat_id,
+                                         text="Ha sido identificado en la plataforma, {}".format(servicio_rest.GetNombrePorID(idusuario)))  # Imprimimos su nombre
+                    else:
+                        context.bot.send_message(chat_id=update.message.chat_id,
+                                                 text="Ha habido un error en la plataforma\nContacte por favor con soporte")
+                    suscripcion_canales(update,context)
+                    botones(update,context)
+                    return ConversationHandler.END
+
         except Exception as e:
             context.bot.send_message(chat_id=update.message.chat_id,
                              text="Ha habido un error en la plataforma\nContacte por favor con soporte")
@@ -1350,6 +1357,10 @@ def retorno_propuesta_deshacer(update: telegram.Update, context: telegram.ext.Ca
 
         cursor.close()
         relacion.close()
+    except telegram.TelegramError as e:
+        if "Message is not modified" in e.message:
+            cursor.close()
+            relacion.close()
     except BaseException as e:
         logging.getLogger(__name__).error(
             "Excepción en función {}. UID del evento:{}. Valor de Callback_query: {}. Motivo: {}".
