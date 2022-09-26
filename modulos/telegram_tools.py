@@ -953,6 +953,7 @@ def mostrar_propuesta_intercambio(evento_ofertado: gestor_calendario.Evento,even
         reply_markup = telegram.InlineKeyboardMarkup(boton_callback)
         mensaje = bot.send_message(chat_id=canalid_admin, text=cadena,
                                    reply_markup=reply_markup, parse_mode="HTML")
+
         cursor.execute(
             f"""UPDATE oferta_demanda set uid_evento_propuesta_intercambio="{evento_propuesto.get_uid()}",id_mensaje_canal_admins="{str(mensaje.message_id)}",accion="enviado" WHERE demandante="{demandante}" and ofertante="{ofertante}" and accion="propuestas" and uid_evento="{evento_ofertado.get_uid()}" and id_mensaje_canal_publicaciones is null and uid_evento_propuesta_intercambio is null;""")
         relacion.commit()
@@ -1071,15 +1072,15 @@ def lista_propuestas_seleccionadas(demandante:str, eventos_ya_propuestos:list[st
         columna_botones=[]
         for evento in lista_eventos:
             if evento.get_uid() not in eventos_ya_propuestos:
+                if not evento.get_comprobar_asistente(asistente=ofertante):
+                    boton=telegram.InlineKeyboardButton(
+                            text="{} - {}".format(evento.get_summary(),
+                                                evento.get_fecha_str()
+                                                  ),
+                            callback_data="{};{}".format("hacer_propuesta", evento.get_uid())
+                            )
 
-                boton=telegram.InlineKeyboardButton(
-                        text="{} - {}".format(evento.get_summary(),
-                                            evento.get_fecha_str()
-                                              ),
-                        callback_data="{};{}".format("hacer_propuesta", evento.get_uid())
-                        )
-
-                columna_botones.append(list([boton]))
+                    columna_botones.append(list([boton]))
 
 
         columna_botones.append([telegram.InlineKeyboardButton(
@@ -1234,14 +1235,16 @@ def retorno_permutar(update:telegram.Update, context:telegram.ext.CallbackContex
                                                  permutado.get_summary(), permutado.get_fecha_str()),
                                              parse_mode="HTML")
 
-                    reply_markup,texto=lista_propuestas_seleccionadas(correo)
+                    reply_markup,texto=lista_propuestas_seleccionadas(correo,ofertante=ofertante)
                     mensaje=context.bot.send_message(
                         chat_id=update.callback_query.from_user.id,
                         text=texto,
                         reply_markup=reply_markup,
                         parse_mode="HTML"
                     )
-
+                else:
+                    context.bot.send_message(chat_id=update.callback_query.from_user.id,
+                                             text="No se puede usted inscribir en el evento porque ya está inscrito")
             logging.getLogger(__name__).debug("UID del evento es:{} por el usuario {}".
                                               format(uid_evento, update.callback_query.from_user.id))
         cursor.close()
@@ -1291,7 +1294,7 @@ def retorno_propuesta(update: telegram.Update, context: telegram.ext.CallbackCon
                 id_eventos.append(id_evento[0])
 
 
-            reply_markup,texto=lista_propuestas_seleccionadas(demandante, id_eventos)
+            reply_markup,texto=lista_propuestas_seleccionadas(demandante, id_eventos,ofertante=ofertante)
             context.bot.edit_message_text(chat_id=update.callback_query.from_user.id,message_id=update.callback_query.message.message_id,text=texto,reply_markup=reply_markup,parse_mode="HTML")
 
 
@@ -1336,7 +1339,7 @@ def retorno_propuesta_deshacer(update: telegram.Update, context: telegram.ext.Ca
                 and id_mensaje_chat="{update.callback_query.message.message_id}";""")
             relacion.commit()
 
-            reply_markup, texto = lista_propuestas_seleccionadas(demandante)
+            reply_markup, texto = lista_propuestas_seleccionadas(demandante,ofertante=ofertante)
 
             context.bot.edit_message_text(chat_id=str(update.callback_query.from_user.id),
                                           message_id=str(update.callback_query.message.message_id),
@@ -1394,44 +1397,17 @@ def retorno_propuesta_enviar(update: telegram.Update, context: telegram.ext.Call
                 f"""UPDATE oferta_demanda  set accion="propuestas" where uid_evento="{uid_evento_ofertado}" and ofertante="{ofertante}" and demandante="{demandante}" and id_mensaje_canal_admins IS NULL and id_mensaje_canal_publicaciones IS NULL and accion="permutar";""")
             relacion.commit()
             evento_ofertado=cal_principal.get_evento(uid_evento=uid_evento_ofertado)
-            texto = "Propuestas las actividades siguientes por el usuario {}\n a cambio de la actividad <b>{}</b> - <i>{}</i>\nEscoja una o rechace las propuestas:\n".format(
-                servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(demandante)),
+            texto = "Propuestas las actividades siguientes por el usuario \n{}({})\na cambio de la actividad\n<b>{}</b> - <i>{}</i>\nEscoja una o rechace las propuestas:\n".format(
+                servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(demandante)),demandante,
                 evento_ofertado.get_summary(),
                 evento_ofertado.get_fecha_str()
             )
-            fila_botones = []
-            columna_botones = []
-            for id in id_eventos:
-                evento = cal_principal.get_evento(uid_evento=id)
-                texto += "\n<b>{}</b> - <i>{}</i>".format(evento.get_summary(), evento.get_fecha_str())
-                if len(fila_botones) < 1:
-                    fila_botones.append(
-                        telegram.InlineKeyboardButton(
-                            text="{} - {}".format(evento.get_summary(), evento.get_fecha_str()),
-                            callback_data="{};{}".format("aceptar_propuesta", evento.get_uid())
-                        )
-                    )
-                    if id == id_eventos[-1]:
-                        columna_botones.append(list(fila_botones))
-                else:
-                    columna_botones.append(list(fila_botones))
-                    fila_botones.clear()
-                    fila_botones.append(
-                        telegram.InlineKeyboardButton(
-                            text="{} - {}".format(evento.get_summary(),
-                                                                    evento.get_fecha_str()),
-                            callback_data="{};{}".format("aceptar_propuesta", evento.get_uid())
-                        )
-                    )
-                    if id == id_eventos[-1]:
-                        columna_botones.append(list(fila_botones))
 
-
-            columna_botones.append([ telegram.InlineKeyboardButton(
+            boton=[[ telegram.InlineKeyboardButton(
                 text="Rechazar las propuestas", callback_data="{};{}".format("rechazar_propuesta", uid_evento_ofertado)
-            )])
+            )]]
 
-            reply_markup = telegram.InlineKeyboardMarkup(columna_botones)
+            reply_markup = telegram.InlineKeyboardMarkup(boton)
 
             borrar_mensaje(id_chat=update.callback_query.from_user.id,id_mensaje=update.callback_query.message.message_id)
             mensaje = context.bot.send_message(
@@ -1441,8 +1417,36 @@ def retorno_propuesta_enviar(update: telegram.Update, context: telegram.ext.Call
                 parse_mode="HTML"
             )
             cursor.execute(
-                f"""UPDATE propuestas set id_mensaje_chat="{mensaje.message_id}" where uid_evento_ofertado="{uid_evento_ofertado}" and ofertante="{ofertante}" and demandante="{demandante}" and id_mensaje_chat="{update.callback_query.message.message_id}";""")
+                f"""INSERT INTO propuestas  (ofertante,demandante,id_mensaje_chat,uid_evento_ofertado,uid_evento_propuesto ) 
+                VALUES("{ofertante}","{demandante}","{mensaje.message_id}","{uid_evento_ofertado}","{uid_evento_ofertado}");""")
             relacion.commit()
+            for id_evento in id_eventos:
+                evento = cal_principal.get_evento(uid_evento=id_evento)
+                cadena = "<b>{}</b>\n".format(evento.get_summary())
+
+                if evento.get_cuenta_asistentes() > 0:
+                    cadena += "<i>Asignado a</i>:\n"
+                    for asistente in evento.get_asistentes():
+                        if evento.get_rol_asistente(asistente) == "REQ-PARTICIPANT":
+                            nombre = servicio_rest.GetNombrePorID(servicio_rest.GetIDPorEmail(asistente))
+                            cadena += " - <b>{}</b> (<i>{}</i>)\n".format(nombre, asistente)
+
+
+                cadena += "\nen fecha: <b>{}</b>".format(evento.get_fecha_str())
+                boton=[[telegram.InlineKeyboardButton(
+                    text="Aceptar propuesta",
+                    callback_data="{};{}".format("aceptar_propuesta", evento.get_uid())
+                )]]
+                reply_markup = telegram.InlineKeyboardMarkup(boton)
+                mensaje = context.bot.send_message(
+                    chat_id=servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(ofertante)),
+                    text=cadena,
+                    reply_markup=reply_markup,
+                    parse_mode="HTML"
+                )
+                cursor.execute(
+                    f"""UPDATE propuestas set id_mensaje_chat="{mensaje.message_id}" where uid_evento_ofertado="{uid_evento_ofertado}" and ofertante="{ofertante}" and demandante="{demandante}" and uid_evento_propuesto="{id_evento}";""")
+                relacion.commit()
 
         cursor.close()
         relacion.close()
@@ -1481,10 +1485,16 @@ def retorno_aceptar_propuesta(update: telegram.Update, context: telegram.ext.Cal
             demandante=datos[0][1]
 
             mostrar_propuesta_intercambio(cal_principal.get_evento(uid_evento=uid_evento_ofertado),cal_principal.get_evento(uid_evento=uid_evento_aceptado),demandante=demandante,ofertante=ofertante)
-            borrar_mensaje(id_chat=update.callback_query.from_user.id,id_mensaje=update.callback_query.message.message_id)
-            cursor.execute(f"""DELETE FROM propuestas 
-                                  where demandante="{demandante}" and ofertante="{ofertante}" and uid_evento_ofertado="{uid_evento_ofertado}" and id_mensaje_chat="{update.callback_query.message.message_id}";""")
-            relacion.commit()
+            cursor.execute(f"""SELECT id_mensaje_chat,uid_evento_propuesto from propuestas where ofertante="{ofertante}" and demandante="{demandante}" and uid_evento_ofertado="{uid_evento_ofertado}"; """)
+            datos=cursor.fetchall()
+            for dato in datos:
+                id_mensaje=dato[0]
+                uid_evento_propuesto=dato[1]
+
+                borrar_mensaje(id_chat=update.callback_query.from_user.id,id_mensaje=id_mensaje)
+                cursor.execute(f"""DELETE FROM propuestas 
+                                      where demandante="{demandante}" and ofertante="{ofertante}" and uid_evento_ofertado="{uid_evento_ofertado}" and uid_evento_propuesto="{uid_evento_propuesto}" and id_mensaje_chat="{id_mensaje}";""")
+                relacion.commit()
 
 
 
@@ -1526,8 +1536,19 @@ def retorno_rechazar_propuesta(update: telegram.Update, context: telegram.ext.Ca
             datos = cursor.fetchall()
             demandante = datos[0][0]
             evento_demandante_rechazado=cancelar_propuesta_evento(uid_evento_ofertado,demandante)
-            borrar_mensaje(id_chat=update.callback_query.from_user.id,
-                           id_mensaje=update.callback_query.message.message_id)
+
+            cursor.execute(
+                f"""SELECT id_mensaje_chat,uid_evento_propuesto from propuestas where ofertante="{ofertante}" and demandante="{demandante}" and uid_evento_ofertado="{uid_evento_ofertado}"; """)
+            datos = cursor.fetchall()
+            for dato in datos:
+                id_mensaje = dato[0]
+                uid_evento_propuesto = dato[1]
+
+                borrar_mensaje(id_chat=update.callback_query.from_user.id, id_mensaje=id_mensaje)
+                cursor.execute(f"""DELETE FROM propuestas 
+                                                 where demandante="{demandante}" and ofertante="{ofertante}" and uid_evento_ofertado="{uid_evento_ofertado}" and uid_evento_propuesto="{uid_evento_propuesto}" and id_mensaje_chat="{id_mensaje}";""")
+                relacion.commit()
+
             texto="Sus propuestas para la oferta de intercambio <b>{}</b> - <i>{}</i> han sido rechazadas.".format(evento_demandante_rechazado.get_summary(),evento_demandante_rechazado.get_fecha_str())
             context.bot.send_message(chat_id=servicio_rest.GetidTelPoridREST(servicio_rest.GetIDPorEmail(demandante)),
                                      text=texto,
